@@ -1,1001 +1,458 @@
 'use strict';
 const Homey = require('homey');
-const http = require('http');
+const request = require('../../lib/cbox-http');
+const manifest = require('../../app.json').drivers.find(driver => driver.id === 'cbox');
 
-const withLog = false;
-
-
-const REGULATION_ENUM = {
-	WAITING_TEMP: "WAITING_TEMP",
-	BURNING: "BURNING",
-	STOPPED: "STOPPED",
-	PAUSED: "PAUSED",
-	SILENTLY: "SILENTLY",
-	HG: "HORS_GEL"
-}
-
-const STOVE_STATE = {
-	UNKNOW: 'UNKNOW',
-	STOPPED:'STOPPED',
-	STARTING:'STARTING',
-	STARTED:'STARTED',
-	STOPPING:'STOPPING',
-	FAULTED:'FAULTED'
+const MODE = Object.freeze({
+  WAITING: 'WAITING_TEMP', BURNING: 'BURNING', STOPPED: 'STOPPED',
+  PAUSED: 'PAUSED', SILENT: 'SILENTLY', HG: 'HORS_GEL',
+});
+const STATE = Object.freeze({
+  UNKNOWN: 'UNKNOW', STOPPED: 'STOPPED', STARTING: 'STARTING',
+  STARTED: 'STARTED', STOPPING: 'STOPPING', FAULTED: 'FAULTED',
+});
+const sequence = tasks => tasks.reduce((chain, task) => chain.then(task), Promise.resolve());
+const finite = value => typeof value === 'number' && Number.isFinite(value);
+function number(value, name, min = -Infinity, max = Infinity, integer = false) {
+  if ((typeof value !== 'number' && typeof value !== 'string') || String(value).trim() === '') {
+    throw new Error(`Invalid ${name}`);
+  }
+  const result = Number(value);
+  if (!Number.isFinite(result) || result < min || result > max || (integer && !Number.isInteger(result))) {
+    throw new Error(`Invalid ${name}`);
+  }
+  return result;
 }
 
 class CBoxDevice extends Homey.Device {
-	smartStartEnbale = false;
-	smartPauseEnable = false;
-	tempSmartPause = 45;
-	timeoutSmartPause = null;
-	useExtCaptor = false;
-	stoveIp = null;
-	timeoutId;
-	stoveState = STOVE_STATE.UNKNOW;
-	regulationMode = REGULATION_ENUM.STOPPED;
-
-	async onInit(){
-		if( withLog) this.log('CBox Récupération des parametres...');
-
-		const settings = this.getSettings();
-		this.smartStartEnbale = settings.smartStart;
-		this.smartPauseEnable = settings.smartPause;
-		this.tempSmartPause = settings.pauseTemp;
-		this.useExtCaptor = settings.externalTerm;
-		this.stoveIp = settings.ip;
-		this.isAutoModeActive = false;
-
-		this.deltaN1 = settings['deltaN1'];
-		this.deltaN2 = settings['deltaN2'];
-		this.deltaSilence = settings['deltaSilence'];
-		this.deltaSilenceEnabled = settings['deltaSilenceEnable'];
-
-
-		this.log('CBox Initialisation...');
-		this.letUpdateTime = Date.now();
-		this.regulationMode = await this.getCapabilityValue( 'stove_regulation' );
-		//this.stoveStatus = null;
-		this.registerCapabilityListener('target_temperature', this.onCapabilityTargetTemperature.bind(this));
-		this.registerCapabilityListener('target_power', this.onCapabilityTargetPower.bind(this));
-		this.registerCapabilityListener('target_fan_speed', this.onCapabilityTargetFanSpeed.bind(this));
-		this.registerCapabilityListener('onoff', this.onCapabilityOnOff.bind(this));
-		this.registerCapabilityListener('stove_regulation', this.onCapabilityRegulationMode.bind(this));
-
-		//Mise a jour au besoin
-		if( !this.hasCapability('pellets_burned') ){
-			this.addCapability('pellets_burned');
-			await this.setCapabilityValue('pellets_burned', 0);
-			await this.setStoreValue('prePelletsAttentionSended', true);
-			await this.setStoreValue('reloadDoneIndex', 0);
-		}
-
-		if( !this.hasCapability('pellets_burned_since_load') ){
-			await this.addCapability('pellets_burned_since_load');
-			this.setCapabilityValue('pellets_burned_since_load', 25);
-		}
-
-		if( !this.hasCapability('stove_connection') )
-			this.addCapability('stove_connection');
-
-		if( !this.hasCapability('stove_ignation') )
-			this.addCapability('stove_ignation');
-		if( null == await this.getCapabilityValue('stove_ignation')){
-			await this.setCapabilityValue('stove_ignation', true);
-		}
-		this.registerCapabilityListener('stove_ignation', this.onCapabilityLocked.bind(this));
-
-		if( !this.hasCapability('auto_mode') )
-			this.addCapability('auto_mode');
-		if( null == await this.getCapabilityValue('auto_mode')){
-			await this.setCapabilityValue('auto_mode', true);
-		}
-		this.registerCapabilityListener('auto_mode', this.onCapabilityAuto.bind(this));
-		this.isAutoModeActive = this.isAutoModeEnable();
-
-		if( this.hasCapability('locked') )
-			this.removeCapability('locked');
-		
-		if( !this.hasCapability('measure_power') )
-			this.addCapability('measure_power');
-		if( !this.hasCapability('meter_power') )
-			this.addCapability('meter_power');
-
-
-
-		this.setCapabilityValue('stove_connection', null)
-		//await this.setCapabilityValue('stove_state', this.stoveState);
-
-		//Declenchement de l'alarme en cas de manque de pellet
-		this.alarmePelletsChange = this.homey.flow.getDeviceTriggerCard('pellets_attention');
-		//Arret de l'alarme en cas de plus de manque de pellet
-		this.alarmePelletsChangeOff = this.homey.flow.getDeviceTriggerCard('pellets_attention_off');
-		// Declenchement pre alarme
-		this. preAlarmePelets = this.homey.flow.getDeviceTriggerCard('pre_pellets_attention');
-		//Delenchement changement état
-		//this.onChangeState = this.homey.flow.getDeviceTriggerCard('on_state_change');
-
-		if( typeof this.stoveIp === 'undefined') return null;
-		else if( this.timeoutId != null ){
-			if( withLog) this.log('Suppression d une ancienne tache de maj');
-			this.homey.clearInterval(this.timeoutId)
-		}
-		try{
-			if( withLog) this.log('Test de la communication...');
-			await this.checkComm();
-			this.setCapabilityValue('stove_connection', !true);
-			this.setAvailable();
-			if( withLog) this.log('Connexion OK')
-		}catch(error){
-			this.setCapabilityValue('stove_connection', !false);
-			this.setUnavailable();
-			let notificationErrorCom = this.homey.notifications.createNotification({excerpt:"Communication impossible avec le CBOX"});
-			return null;
-		}
-		try{
-			await this.onTimeOut();
-		}catch(error){
-			let notificationErrorCom = this.homey.notifications.createNotification({excerpt:"Mise a jour impossible des états du poele"});
-			return null;
-		}
-		this.timeoutId  = await this.registerIntervalRequest();
-		this.homey.on('unload', () => clearInterval(this.timeoutId));
-		if( withLog) this.log('Initialisation finalisée');
-
-		//let notification = this.homey.notifications.createNotification({excerpt:"L'Application a bien démarrée"});
-
-	}
-
-
-	async registerIntervalRequest(){
-		if( withLog) this.log('Enregistrement de la mise a jour réguliere');
-		return this.homey.setInterval(async() => {
-			try{
-				await this.onTimeOut();
-			}catch(err){
-				if (err.message.startsWith("Not Found")) {
-      				console.error("Device introuvable :", err.message);
-				}else{
-					console.error("Erreur inconnue :", err);
-				}
-			}
-		}, 60000);
-	}
-
-
-	async onSettings(settings){
-		this.smartStartEnbale = settings.newSettings.smartStart;
-		this.smartPauseEnable = settings.newSettings.smartPause;
-		this.tempSmartPause = settings.newSettings.pauseTemp;
-		this.useExtCaptor = settings.newSettings.externalTerm;
-		
-		if( settings.newSettings.deltaN2 <= settings.newSettings.deltaN1)
-			throw new Error('Temp. N1 must be lower than Temp. N2');
-		
-		if( settings.newSettings.deltaN2 > settings.newSettings.deltaSilence)
-			throw new Error('Temp. N2 must be lower or equal than Temp. Silence');
-
-		if( settings.newSettings.deltaSilence < settings.newSettings.deltaN2)
-			throw new Error('Temp. Silence must be greater or equal than Temp. N2');
-
-		if( settings.oldSettings.ip != settings.newSettings.ip ){
-			this.stoveIp = settings.newSettings.ip;
-			try{
-				await this.checkComm();
-				this.setCapabilityValue('stove_connection', !true);
-				this.setAvailable();
-			}catch(error){
-				this.setCapabilityValue('stove_connection', !false);
-				this.setUnavailable();
-				throw new Error("ERROR_COMM_ERROR");
-			}
-			this.clearInterval(this.timeoutId);
-			this.timeoutId = this.registerIntervalRequest();
-		}
-		
-		if( this.useExtCaptor != settings.oldSettings.externalTerm){
-			if( this.useExtCaptor){
-				await this.setCapabilityValue('measure_temperature', await this.getCapabilityValue('external_temperature') );
-			}else{
-				await this.setCapabilityValue('measure_temperature', await this.getCapabilityValue('internal_temperature') );
-			}
-		}
-
-		this.deltaN1 = settings.newSettings.deltaN1;
-		this.deltaN2 = settings.newSettings.deltaN2;
-		this.deltaSilence = settings.newSettings.deltaSilence;
-		this.deltaSilenceEnabled = settings.newSettings.deltaSilenceEnable;
-
-		await this.onTempChange();
-	}
-	
-	async checkComm(){
-		let url = this.getcallCboxURL("LABL", false, null);
-		await this.sendHTTPRequest(url);
-	}
-	
-	async onTimeOut(){
-
-		try{
-			if( withLog) this.log("Mise a jour des états de la CBox");
-			if( withLog) this.log("onTimeOut: regulationMode="+this.regulationMode);
-			let url = this.getcallCboxURL("ALLS", false, null);
-			let data = await this.sendHTTPRequest(url);
-			let resultStoveSate = await this.updateStates(data.STATUS);
-			if(withLog) this.log("onTimeOut: resultStoveSate="+ resultStoveSate);
-			this.stoveState = resultStoveSate;
-			await this.updateAllStates(data);
-			await this.updateEnergyPowerConso();
-			//this.checkStateAndRegulationMode();
-			if( withLog) this.log("MAJ Terminée\n\n\n");
-			if( await this.getCapabilityValue('stove_connection') == !false){
-				this.setCapabilityValue('stove_connection', !true);
-				this.setAvailable();
-			}
-		}catch(error){
-			if( withLog) this.log('Erreur de communication avec la CBox: ', error);
-			if( await this.getCapabilityValue('stove_connection') == !true){
-				this.setCapabilityValue('stove_connection', !false);
-				try{
-					this.setUnavailable();
-				}catch(error){
-					console.log(error);
-				}
-			}
-		}
-	}
-	
-	async updateAllStates(data){
-		await Promise.all([
-			this.setStateOnOff(),
-			this.setTargetTemperature(data.SETP),
-			this.setPower(data.PWR),
-			this.setFanSpeed(data.F2L),
-			this.setInternalTemp(data.T1),
-			this.setBurnedPellets(data.PQT)
-		]);
-		return true;
-	}
-
-	async updateEnergyPowerConso(){
-		let lastPower = await this.getCapabilityValue('measure_power');
-		let newPower = 0;
-		if( this.stoveState == STOVE_STATE.STARTING ){
-			newPower = 345;
-		}
-		else if( this.stoveState == STOVE_STATE.STARTED ){
-			let state = await this.getCapabilityValue('target_fan_speed');
-			//Speed AUTO 7
-			let powerBySpeed = 33
-			//MAX
-			if( state == "6" )
-				powerBySpeed = 49;
-			else if( state == "5" || state == "4" )
-				powerBySpeed = 47.5;
-			else if( state == "3" || state == "2" )
-				powerBySpeed = 35;
-			else if (state == "1")
-				powerBySpeed = 22;
-			else if (state == "0")
-				powerBySpeed = 10;
-
-			newPower = powerBySpeed;
-		}
-		else if( this.stoveState == STOVE_STATE.STOPPING )
-			newPower = 33;
-		else if( this.stoveState == STOVE_STATE.STOPPED || finalState == STOVE_STATE.FAULTED )
-			newPower = 1.3;
-		
-		await this.setCapabilityValue('measure_power', newPower);
-		let newUpdateTime = Date.now();
-
-		let energie = (lastPower/1000) * ((0.001*(newUpdateTime - this.letUpdateTime))/3600);
-		if( withLog) this.log("kWh="+energie);
-		let oldEnergie = await this.getCapabilityValue('meter_power');
-		this.setCapabilityValue('meter_power', oldEnergie + energie);
-		this.letUpdateTime = newUpdateTime
-
-		return true;
-	}
-	
-	/*------ MAJ CAPABILITIES -------------*/
-	async updateStates(state ){
-		let oldStoveState = await this.getCapabilityValue('stove_state');
-		if( withLog ){
-			this.log('Befor updateStates:\n'+
-				"oldStoveState="+oldStoveState
-			);
-		}
-		let finalState = STOVE_STATE.UNKNOW;
-		if( state == 0 )
-			finalState = STOVE_STATE.STOPPED;
-		else if( state == 3)
-			finalState = STOVE_STATE.STARTING;
-		else if( state == 6)
-			finalState = STOVE_STATE.STARTED;
-		else if( state == 10)
-			finalState = STOVE_STATE.STOPPING;
-		else if( state >= 241 && state <= 253)
-			finalState = STOVE_STATE.FAULTED;
-		else
-			return oldStoveState;
-
-		var promises = new Array();
-		if( oldStoveState != finalState ){
-
-			if( withLog ){
-				this.log('Final stoveState:\n'+
-					"stove_state="+finalState
-				);
-			}
-			promises.push(
-  				this.setCapabilityValue('stove_state', finalState)
-    				.then(() => this.driver.triggerFlowOnStateChange(this, finalState))
-   					.catch(err => this.error('Erreur setCapabilityValue ou triggerFlowOnStateChange', err))
-			);
-			let isBurning = (finalState == STOVE_STATE.STARTING) || (finalState == STOVE_STATE.STARTED);
-			//this.setInsightBurning(isBurning);
-			if( this.withLog )this.log('IsBurning='+isBurning);
-			if( this.withLog )this.log('regulationMode='+this.regulationMode);
-
-			let isOn = await this.getCapabilityValue( 'onoff' );
-			if( this.regulationMode == REGULATION_ENUM.HG ){
-				if( !isOn ){
-					this.regulationMode = REGULATION_ENUM.STOPPED;
-					if( this.withLog )this.log('1 - new regulationMode='+this.regulationMode);
-					this.setCapabilityValue('stove_regulation', REGULATION_ENUM.STOPPED);
-				} 
-			}else if( isBurning && this.regulationMode != REGULATION_ENUM.BURNING && this.regulationMode != REGULATION_ENUM.SILENTLY ){
-				this.regulationMode = REGULATION_ENUM.BURNING;
-				if( this.withLog )this.log('2 - new regulationMode='+this.regulationMode);
-				this.setCapabilityValue('stove_regulation', this.regulationMode);
-				if( !isOn ) this.setCapabilityValue('onoff', true);
-			}else if( !isBurning && this.regulationMode != REGULATION_ENUM.STOPPED && this.regulationMode != REGULATION_ENUM.PAUSED && this.regulationMode != REGULATION_ENUM.WAITING_TEMP ){
-				this.regulationMode = REGULATION_ENUM.STOPPED;
-				if( this.withLog )this.log('3 - new regulationMode='+this.regulationMode);
-				this.setCapabilityValue('stove_regulation', this.regulationMode);
-				if( isOn ) this.setCapabilityValue('onoff', false);
-			}
-		}
-		
-		let declenchementAlarmePellets = false;
-		let oldStatePelletsAlarme = await this.getCapabilityValue('alarm_pellets');
-		if( oldStatePelletsAlarme == null && state == 253 ){
-			promises.push( this.setCapabilityValue('alarm_pellets', true) );
-			declenchementAlarmePellets = true;
-		}else if( oldStatePelletsAlarme == false && state == 253 ){
-			promises.push( this.setCapabilityValue('alarm_pellets', true) );
-			declenchementAlarmePellets = true;
-		}else if( oldStatePelletsAlarme == true && state != 253 ){
-			promises.push( this.setCapabilityValue('alarm_pellets', false) );
-			promises.push( this.setPelletsReloadDone() );
-		}
-		
-		if( declenchementAlarmePellets ){
-			if( withLog) this.log("NO_MORE_PELLETS")
-			this.alarmePelletsChange.trigger(this, {}, {})
-      			//.then(/*this.log("NO_MORE_PELLETS")*/)
-      			.catch(this.error);
-		}
-		
-		
-		await Promise.all(promises);
-		return finalState;
-	}
-
-	async setStateOnOff(){
-		let isOn = await this.getCapabilityValue( 'onoff' );
-		let isOff = !isOn;
-		let regulationMode = this.regulationMode;
-		/* on ne change pas si les états connus sont cohérents*/
-		if( isOff && STOVE_STATE.STOPPED == this.stoveState  && REGULATION_ENUM.STOPPED == regulationMode ){
-			return true;
-		}
-		if( isOn && STOVE_STATE.STARTED == this.stoveState && REGULATION_ENUM.STOPPED != regulationMode ){
-			return true;
-		}
-		/* On calcul les autres états*/
-		/* seul cas a off si l'état est STOPPED et la regulation est STOPPED */
-		if( STOVE_STATE.STOPPED == this.stoveState && REGULATION_ENUM.STOPPED == regulationMode){
-			this.setCapabilityValue('onoff', false);
-			return true;
-		}else {
-			this.setCapabilityValue('onoff', true);
-		}
-		return true;
-	}
-	async setCurrentTemp(temp){
-		let oldTemp = await this.getCapabilityValue('measure_temperature');
-		if( oldTemp == temp ) return true;
-		
-		if( withLog) this.log('Mise a jour de la temperature mesurée a '+ temp);
-		await this.setCapabilityValue('measure_temperature', temp);
-		await this.onTempChange();
-		return true;
-	}
-	async setFanSpeed(fanSpeed){
-		let state = await this.getCapabilityValue('target_fan_speed');
-		let newSpeed = ""+fanSpeed;
-		if( state != newSpeed ){
-			if( withLog) this.log('Mise a jour de la ventilation a '+ fanSpeed);
-			return await this.setCapabilityValue('target_fan_speed', newSpeed);
-		}
-		return true;
-	}
-	async setPower(power){
-		let state = await this.getCapabilityValue('target_power');
-		let newValue = ""+power;
-		if( state != newValue ){
-			if( withLog) this.log('Mise a jour de la puissance a '+ newValue);
-			return await this.setCapabilityValue('target_power', newValue);
-		}
-		return true;	
-	}
-	async setTargetTemperature(targetTemperature){
-		//on rearondi par le poele ne gere pas les 0.5
-		let knownTemp = Math.round(await this.getCapabilityValue('target_temperature'));
-		if( targetTemperature != knownTemp ){
-			if( withLog) this.log('Mise a jour de la température de consigne a '+ targetTemperature);
-		 	await this.setCapabilityValue('target_temperature', targetTemperature);
-			await this.onTempChange();
-			return true;
-		}
-		return true;
-	}
-
-	async setPreset(preset){
-		let targetPreset = preset;
-		if( withLog) this.log('Application du preset numero '+preset);
-		const settings = this.getSettings();
-
-		let targetPresetPower = preset;
-		let targetPresetFanSpeed = preset;
-
-		let targetPower = 1;
-		let targetFanSpeed = 0;
-
-		if( preset < 3 ){
-			targetPower = settings['preset'+targetPresetPower+'BurningPower'];
-			targetFanSpeed = settings['preset'+targetPresetFanSpeed+'FanSpeed'];
-		}else{
-			targetPower = settings['presetSilenceBurningPower'];
-		}
-		if( this.regulationMode == REGULATION_ENUM.SILENTLY){
-			targetFanSpeed = 0;
-			if( withLog) this.log("Preset Silence Puissance: "+targetPower);
-
-		}else{
-			if( withLog) this.log('Preset '+targetPreset + " Puissance: "+targetPower + " Fan: "+targetFanSpeed);
-		}
-
-		try{
-			await this.applyPreset(targetPower,targetFanSpeed);
-		}catch( error ){
-			throw new Error("ERROR_COMM_ERROR");
-		}
-	}
-
-	async setHGPreset(){
-		if( withLog) this.log('Application du preset pour le mode HG');
-		const settings = this.getSettings();
-		let targetPower = settings['presetHGBurningPower'];
-		let targetFanSpeed = settings['presetHGFanSpeed'];
-
-		if( withLog) this.log("Preset Hors GEL Puissance: "+targetPower + " Fan: "+targetFanSpeed);
-		try{
-			await this.applyPreset(targetPower,targetFanSpeed);
-		}catch( error ){
-			throw new Error("ERROR_COMM_ERROR");
-		}
-	}
-	async setBurnedPellets(kilos){
-		let oldValue = await this.getCapabilityValue('pellets_burned');
-		let indexRecharge = await this.getStoreValue('reloadDoneIndex');
-		if( kilos != oldValue ){
-			await this.setCapabilityValue('pellets_burned', kilos);
-			await this.setCapabilityValue('pellets_burned_since_load', kilos - indexRecharge)
-			let delta = await this.getSetting('deltaPelletsBurned');
-			
-			if( (kilos - this.getStoreValue('reloadDoneIndex')) >= delta ){
-				if ( !this.getStoreValue('prePelletsAttentionSended') ){
-					if( await this.getSetting('withPreAlarm') ){
-						this.setStoreValue('prePelletsAttentionSended', true);
-						this.preAlarmePelets.trigger(this, {}, {})
-      						.then(/*this.log("PRE_NO_MORE_PELLETS")*/)
-      						.catch(this.error);
-					}
-				}
-			}
-		}
-		return true;
-	}
-
-	async setPelletsReloadDone(){
-		if( withLog) this.log("Recharge en pellets faite");
-		await this.setCapabilityValue('pellets_burned_since_load', 0);
-		await this.setStoreValue('reloadDoneIndex', await this.getCapabilityValue('pellets_burned') );
-		this.setStoreValue('prePelletsAttentionSended', false);
-		this.alarmePelletsChangeOff.trigger(this, {}, {})
-      			.then(/*this.log("PELLETS_OK")*/)
-      			.catch(this.error);
-		return true;
-	}
-
-	async  applyTargetPresetForHG(){
-		if( withLog) this.log('Selection du preset');
-		const settings = this.getSettings();
-		var targetPower = settings['presetHGBurningPower'];
-		var targetFanSpeed = settings['presetHGFanSpeed'];
-		if( withLog) this.log('Preset HG '+targetPreset + " Puissance: "+targetPower + " Fan: "+targetFanSpeed);
-		try{
-			await this.applyPreset(targetPower,targetFanSpeed);
-		}catch( error ){
-			throw new Error("ERROR_COMM_ERROR");
-		}
-	}
-
-
-	async applyTargetPresetForCurrentTemp(){
-		if( withLog) this.log('Selection du preset');
-		let temp = await this.getCapabilityValue('measure_temperature');
-		let targetTemp = await this.getCapabilityValue('target_temperature');
-		let currentDelta = temp - targetTemp;
-
-		let targetPreset = 0;
-
-		if(temp < targetTemp+this.deltaN1 ){
-			targetPreset = 0;//after that currentDelta is >= 0
-		}else if(currentDelta >= this.deltaN1 && currentDelta < this.deltaN2 ){
-			targetPreset = 1;
-		}else if(currentDelta >= this.deltaN2 && currentDelta < this.deltaSilence ){
-			targetPreset = 2;
-		}else if(currentDelta >= this.deltaN2 && !this.deltaSilenceEnabled ){
-			targetPreset = 2
-		}else if(currentDelta >= this.deltaSilence && this.deltaSilenceEnabled ){
-			targetPreset = 3;
-		}else{
-			targetPreset = 0;
-		}
-		if( withLog) this.log('Application du preset='+targetPreset);
-		this.setPreset(targetPreset);
-
-
-	}
-
-	async isRegulationMode(mode){
-		return await this.getCapabilityValue('stove_regulation') == mode;
-	}
-
-	async setExternalTemp(temp){
-		let oldTemp = await this.getCapabilityValue('external_temperature');
-		if( oldTemp == temp ) return true;
-		if( withLog) this.log('TEMPERATURE EXTERNE'+temp);
-		await this.setCapabilityValue('external_temperature', temp);
-
-		if( this.useExtCaptor ){
-
-			await this.setCurrentTemp(temp);
-		}
-	}
-
-	async setInternalTemp(temp){
-		let oldTemp = await this.getCapabilityValue('internal_temperature');
-		if( oldTemp == temp ) return true;
-		await this.setCapabilityValue('internal_temperature', temp);
-		if( !this.useExtCaptor ){
-			await this.setCurrentTemp(temp);
-		}
-	}
-
-	async setIgnationAllowed(canStart){
-		await this.setCapabilityValue('stove_ignation',canStart);
-		if( true == canStart ){
-			this.onTempChange();
-		}
-	}
-	async enableAutoMode(autoMode){
-		await this.setCapabilityValue('auto_mode',autoMode);
-		if( true == autoMode ){
-			this.onTempChange();
-		}
-	}
-
-	async onTempChange(){
-		if( ! await this.getCapabilityValue('auto_mode') ) return;
-		if( withLog) this.log('Sur Changement de température');
-		let regulationMode = this.regulationMode;
-		if( withLog) this.log("Mode de regulation actuel="+regulationMode);
-		if( REGULATION_ENUM.WAITING_TEMP == regulationMode || REGULATION_ENUM.PAUSED == regulationMode ){
-			let canStartWithSSsettings = await this.isCanStartWSStartKnonwTemp();
-			if( canStartWithSSsettings ){
-				await this.applyTargetPresetForCurrentTemp();
-				await this.setOnOffPoele(true);
-				this.regulationMode = REGULATION_ENUM.BURNING;
-				this.setCapabilityValue('stove_regulation', this.regulationMode);
-			}
-			if( withLog) this.log('Peut redémarrer='+canStartWithSSsettings);
-		}else if(REGULATION_ENUM.BURNING == regulationMode || REGULATION_ENUM.SILENTLY == regulationMode ){
-			let canPaused = await this.isCanPauseWKnonwTemp();
-			if( canPaused ){
-				await this.setOnOffPoele(false);
-				this.regulationMode = REGULATION_ENUM.PAUSED;
-				this.setCapabilityValue('stove_regulation', this.regulationMode);
-			}else if( REGULATION_ENUM.BURNING == regulationMode ){
-				this.applyTargetPresetForCurrentTemp();
-			}
-		}else if( REGULATION_ENUM.HG == regulationMode ){
-			if( await this.isCanPauseForHG() ){
-				await this.setOnOffPoele(false);
-			}else if( await this.isCanStartForHG () ){
-				await this.setOnOffPoele(true);
-			}
-		}
-	}
-
-	async setSilenceMode(isActive){
-		if( withLog) this.log('Gestion du mode silene a '+isActive);
-		await this.setSettings({
-			deltaSilenceEnable: isActive,
-		});
-		this.deltaSilenceEnabled = isActive;
-		return true;
-	}
-
-	async setSmartPause(isActive){
-		await this.setSettings({
-			smartPause: isActive,
-		});
-		this.smartPauseEnable = isActive;
-		return true;
-	}
-
-	async isCanStartWSStartKnonwTemp(){
-		let startLocked = !await this.getCapabilityValue('stove_ignation');
-		if( true == startLocked ){
-			if( withLog) this.log('Demarrage bloqué');	
-			return false;
-		}
-		let stoveState = await this.getCapabilityValue('stove_state');
-		if( withLog) this.log("isCanStartWSStartKnonwTemp: stoveState="+stoveState);
-		
-		if( stoveState != STOVE_STATE.STOPPED )
-			return false;
-		
-		let regulationMode = this.regulationMode;
-		if( withLog) this.log("isCanStartWSStartKnonwTemp: regulationMode="+regulationMode);
-
-		if( !this.smartStartEnbale &&
-				regulationMode != REGULATION_ENUM.PAUSED ){
-			if( withLog) this.log("isCanStartWSStartKnonwTemp: State 1");
-			return true;
-		}
-
-		let mesuredTemp = await this.getCapabilityValue('measure_temperature');
-		let targetTemp = await this.getCapabilityValue('target_temperature');
-		if( null == mesuredTemp ) return false;
-
-		if( withLog) this.log('deltaReprisePause: regulationMode='+regulationMode);
-		if( withLog) this.log("isCanStartWSStartKnonwTemp: mesuredTemp="+mesuredTemp);
-		if( withLog) this.log("isCanStartWSStartKnonwTemp: targetTemp="+targetTemp);
-		
-		const settings = this.getSettings();
-		let deltaReprisePause = settings.restartPauseTemp;
-		
-		if( withLog) this.log("deltaReprisePause: deltaReprisePause="+deltaReprisePause);
-		if( withLog) this.log('deltaReprisePause: On verifie si le redemarrage est possible');
-
-
-		if( regulationMode == REGULATION_ENUM.WAITING_TEMP && mesuredTemp <= targetTemp ){
-			if( withLog) this.log("Je suis en WT et mesuredTemp <= targetTemp");
-			return true;
-		}
-		if( regulationMode == REGULATION_ENUM.PAUSED && mesuredTemp <= (targetTemp+deltaReprisePause) ){
-			if( withLog) this.log("Je suis en PAUSED et mesuredTemp <= (targetTemp+deltaReprisePause)");
-			return true;
-		}
-
-		return false;
-	}
-
-	async isCanPauseWKnonwTemp(){
-		if( withLog) this.log('Etat du smat Pause = '+this.smartPauseEnable);
-		if( !this.smartPauseEnable ) return false;
-		let stoveState = await this.getCapabilityValue('stove_state');
-		if( stoveState != STOVE_STATE.STARTED ) return false;
-
-		let mesured = await this.getCapabilityValue('measure_temperature');
-		if( null == mesured ) return false;
-		let targetTemp = await this.getCapabilityValue('target_temperature');
-		if( mesured >= (this.tempSmartPause+targetTemp) ) return true;
-
-		return false;
-	}
-
-	async isCanPauseForHG(){
-		if( withLog) this.log('Calcul de la mise en Pause pour le mode HG');
-		let stoveState = await this.getCapabilityValue('stove_state');
-		if( withLog) this.log('Stove state= '+ stoveState);
-		if( stoveState != STOVE_STATE.STARTED ) return false;
-
-		let mesured = await this.getCapabilityValue('measure_temperature');
-		
-		if( null == mesured ) return true;
-		let targetTemp = await this.getSetting('hgMaxTemp');
-		if( withLog) this.log('Temp mesuree='+mesured+" Demarrage="+targetTemp);
-		if( mesured > targetTemp ) return true;
-
-		return false;
-	}
-
-	async isCanStartForHG(){
-		if( withLog) this.log('Calcul de la mise en marche pour le mode HG');
-		let startLocked = !await this.getCapabilityValue('stove_ignation');
-		if( true == startLocked ){
-			if( withLog) this.log('Demarrage bloqué');	
-			return false;
-		}
-
-		let stoveState = await this.getCapabilityValue('stove_state');
-		if( stoveState != STOVE_STATE.STOPPED ) return false;
-
-		let mesured = await this.getCapabilityValue('measure_temperature');
-		if( null == mesured ) return false;
-
-		let targetTemp = await this.getSetting('hgMinTemp');
-		if( withLog) this.log('Temp mesuree='+mesured+" Demarrage="+targetTemp);
-		if( mesured <= targetTemp ) return true;
-
-		return false;
-	}
-
-	async isSmartStartEnabled(){
-		return this.smartStartEnbale;
-	}
-	
-	async isSmartPauseEnabled(){
-		return this.smartPauseEnable;
-	}
-
-	async isIgnationAllowed(){
-		return await this.getCapabilityValue('stove_ignation');
-	}
-	async isAutoModeEnable(){
-		return await this.getCapabilityValue('auto_mode');
-	}
-
-	/*------ CAPABILITIES LISTENER ----------*/
-
-	async onCapabilityOnOff(value, opts){
-		let url = null;
-		let currentStoveState = await this.getCapabilityValue('stove_state');
-		if( withLog) this.log("onCapabilityOnOff: currentStoveSate="+currentStoveState);
-		if( withLog) this.log("onCapabilityOnOff: value="+value);
-
-		if( this.stoveState == STOVE_STATE.STOPPED && value == true ){
-			this.regulationMode = REGULATION_ENUM.WAITING_TEMP;
-			await this.setCapabilityValue('stove_regulation', this.regulationMode);
-		}else if( this.stoveState == STOVE_STATE.STARTED && value == false ){
-			/* NOTHING */
-		}else if( this.stoveState == STOVE_STATE.STOPPED && value == false ){
-			this.regulationMode = REGULATION_ENUM.STOPPED;
-			if( this.withLog )this.log('1 - onCapabilityOnOff regulationMode='+this.regulationMode);
-			await this.setCapabilityValue('stove_regulation', this.regulationMode);
-			return true;
-		}else if( this.stoveState == STOVE_STATE.STOPPING && value == false ){
-			this.regulationMode = REGULATION_ENUM.STOPPED;
-			if( this.withLog )this.log('2 - onCapabilityOnOff regulationMode='+this.regulationMode);
-			await this.setCapabilityValue('stove_regulation', this.regulationMode);
-			return true;
-		}else{
-			throw new Error(this.homey.__('illegalStateOnOff'));
-		}
-		try{
-			if( value ){
-				let canStartWKTemp = await this.isCanStartWSStartKnonwTemp();
-				if( withLog) this.log("onCapabilityOnOff: canStartWKTemp="+canStartWKTemp);
-				if( canStartWKTemp ){/* demande de demarrage*/
-					await this.setOnOffPoele(true);
-					this.regulationMode = REGULATION_ENUM.BURNING;
-					await this.setCapabilityValue('stove_regulation', this.regulationMode);
-				}
-			}else {
-				await this.setOnOffPoele(false);
-				this.regulationMode = REGULATION_ENUM.STOPPED;
-				if( this.withLog )this.log('3 - onCapabilityOnOff regulationMode='+this.regulationMode);
-				await this.setCapabilityValue('stove_regulation', this.regulationMode);
-			}
-		}catch( error ){
-			throw new Error("ERROR_COMM_ERROR");
-		}
-	}
-
-	async onCapabilityTargetTemperature(value, opts){
-		let url = this.getcallCboxURL("SETP", true, Math.round(value));
-		try{
-			await this.sendHTTPRequest(url);
-			await this.setCapabilityValue('target_temperature', value);
-			await this.onTempChange();
-		}catch( error ){
-			throw new Error("ERROR_COMM_ERROR");
-		}
-	}
-	
-	async onCapabilityTargetPower(value, opts){
-		if( await this.getCapabilityValue('auto_mode'))
-			throw new Error("AUTO_MODE_ENABLED");
-		let url = this.getcallCboxURL("POWR", true, value);
-		try{
-			await this.sendHTTPRequest(url);
-			this.setCapabilityValue('target_power', value);
-		}catch( error ){
-			throw new Error("ERROR_COMM_ERROR");
-		}
-		return true;
-	}
-	
-	async onCapabilityTargetFanSpeed(value, opts){
-		if( await this.getCapabilityValue('auto_mode'))
-			throw new Error("AUTO_MODE_ENABLED");
-		let url = this.getcallCboxURL("RFAN", true, value);
-		try{
-			await this.sendHTTPRequest(url);
-			this.setCapabilityValue('target_fan_speed', value);
-		}catch( error ){
-			throw new Error("ERROR_COMM_ERROR");
-		}
-	}
-
-	async onCapabilityRegulationMode(value, opts){
-		let isOn = await this.getCapabilityValue('onoff');
-		let stoveState = await this.getCapabilityValue('stove_state');
-		let startLocked = ! await this.getCapabilityValue('stove_ignation');
-
-		//if( !isOn && value == "STOPPED" ) throw new Error(this.homey.__('illegalRegulationMode'));
-		if( isOn && value == REGULATION_ENUM.STOPPED && (stoveState == STOVE_STATE.STOPPED || stoveState == STOVE_STATE.STOPPING) ){
-			this.log("onCapabilityRegulationMode: value="+value);
-			this.regulationMode = value;
-			this.setCapabilityValue('stove_regulation', value);
-			this.setCapabilityValue('onoff', false);
-			return;
-		}else if( value == REGULATION_ENUM.STOPPED ){
-			throw new Error(this.homey.__('manualActionImpossible'));
-		}
-
-		if( !isOn && value == REGULATION_ENUM.HG && stoveState == STOVE_STATE.STOPPED ){
-			await this.applyTargetPresetForHG();
-			if( this.isCanStartForHG() ){
-				await this.setOnOffPoele(true);
-			}
-			return;
-		}
-
-		if( value == REGULATION_ENUM.WAITING_TEMP ) throw new Error(this.homey.__('manualActionImpossible'));
-		if( !isOn ){
-			throw new Error(this.homey.__('illegalRegulationMode'));
-		}
-		/* A CE POINT LE POELE EST FORCEMENT ON (pas forcement en train de bruler) */
-		let needPresetUpdate = false;
-		if( value == REGULATION_ENUM.SILENTLY && (stoveState == STOVE_STATE.STARTED || stoveState == STOVE_STATE.STARTING) ){
-			if( withLog) this.log('Passage en mode silence');
-			needPresetUpdate = true;
-		}else if( value == REGULATION_ENUM.PAUSED && stoveState == STOVE_STATE.STARTED ){
-			await this.setOnOffPoele(false);
-		}else if( value == REGULATION_ENUM.BURNING && stoveState == STOVE_STATE.STOPPED ){
-			if( !this.isAutoModeEnable || (this.isAutoModeActive && this.isCanStartWSStartKnonwTemp()) ){
-				await this.setOnOffPoele(true);
-			}else{
-				throw new Error(this.homey.__('illegalRegulationMode'));
-			}
-		}else if( value == REGULATION_ENUM.BURNING && (stoveState == STOVE_STATE.STARTED || stoveState == STOVE_STATE.STARTING) ){
-			if( withLog) this.log('Passage en mode burning');
-			needPresetUpdate = true;
-		}else if( value == REGULATION_ENUM.HG && (stoveState == STOVE_STATE.STOPPED || stoveState == STOVE_STATE.PAUSED ) ){
-			await this.applyTargetPresetForHG();
-			if( this.isCanStartForHG() ){
-				await this.setOnOffPoele(true);
-			}
-		}else if( value == REGULATION_ENUM.HG && stoveState == STOVE_STATE.STARTED ){
-			if( withLog) this.log('Passage en mode HG');
-			await this.applyTargetPresetForHG();
-			if( this.isCanPauseForHG() ){
-				await this.setOnOffPoele(false);
-			}
-		}else {
-			throw new Error(this.homey.__('manualActionImpossible'));
-		}
-		/* ON MET A JOUR L'ETAT*/
-		this.regulationMode = value;
-		await this.setCapabilityValue('stove_regulation', value);
-		if( needPresetUpdate )
-			await this.applyTargetPresetForCurrentTemp();
-	}
-
-	async onCapabilityLocked(value, opts){
-		this.setCapabilityValue('stove_ignation', value);
-	}
-
-
-
-	async onCapabilityAuto(value, opts){
-		await this.setCapabilityValue('auto_mode', value);
-		this.isAutoModeActive = value;
-		if( value )
-			this.onTempChange();
-	}
-	
-	/*---------- COMMUNICATION AVEC LA CBOX --------*/
-	getOnOffRequestURL(isGotoOn) {
-		if( null == this.stoveIp ) throw Error('ERROR_NO_IP');;
-		let url = "http://"+this.stoveIp+"/cgi-bin/sendmsg.lua?cmd=CMD+";
-		if( isGotoOn ){
-			url += "ON";
-		}else{
-			url += "OFF";
-		}
-		return url;
-	}
-	
-	getcallCboxURL(command, isSet, value) {
-		
-		if( null == this.stoveIp ) throw Error('ERROR_NO_IP');
-		let url = "http://"+this.stoveIp+"/cgi-bin/sendmsg.lua?cmd=";
-		if( isSet ){
-			url += "SET+"+command+"+"+value;
-		}else{
-			url += "GET+"+command;
-		}
-		return url;
-	}
-
-	async setOnOffPoele(setOn){
-		let url = this.getOnOffRequestURL(setOn);
-		try{
-			await this.sendHTTPRequest(url);
-		}catch( error ){
-			throw new Error("ERROR_COMM_ERROR");
-		}
-	}
-	
-	async applyPreset(power, fanSpeed){
-		if( withLog) this.log('Application preset: Power:'+power+' Fan:'+fanSpeed);
-		let urlForFan = this.getcallCboxURL("RFAN", true, fanSpeed);
-		let urlForPower = this.getcallCboxURL("POWR", true, power);
-		if( withLog) this.log('ENVOIE FAN');
-		await this.sendHTTPRequest(urlForFan);
-		if( withLog) this.log('ENVOI POWER');
-		await this.sendHTTPRequest(urlForPower);
-		if( withLog) this.log('SAUVEGARDE ETAT');
-		this.setCapabilityValue('target_fan_speed', ""+fanSpeed);
-		this.setCapabilityValue('target_power', ""+power);
-
-		return true;
-	}
-	
-	sendHTTPRequest(url){
-		return new Promise( (resolve, reject)=>{
-			var myRequest = http.get(url, resp =>{
-				let data = '';
-				resp.on('data', (chunk) => {
-					data += chunk;
-				});
-				resp.on('end', () => {
-					try{
-						let jsonData = JSON.parse(data);
-						if( jsonData.SUCCESS )
-							resolve(jsonData.DATA);
-						else
-							reject(new Error('Failed'));
-					}catch(error){
-						reject(error);
-					}
-				});
-			});
-			myRequest.on("error", function(err){
-				reject(err);
-			});
-			myRequest.setTimeout(5000);
-			myRequest.end();
-		});
-	}
+  // Only SDK entry points enqueue. Internal methods return their promises and
+  // never enqueue recursively, so a multi-command operation cannot deadlock.
+  runOperation(operation) {
+    const result = (this.operationTail || Promise.resolve()).then(() => {
+      if (this.disposed) throw new Error('CBox device stopped');
+      return operation();
+    });
+    this.operationTail = result.catch(() => {});
+    return result;
+  }
+
+  onInit() {
+    this.disposed = false;
+    this.stoveState = STATE.UNKNOWN;
+    this.regulationMode = this.getCapabilityValue('stove_regulation') || MODE.STOPPED;
+    this.lastEnergyUpdate = Date.now();
+    this.applySettings(this.getSettings());
+    this.alarmePelletsChange = this.homey.flow.getDeviceTriggerCard('pellets_attention');
+    this.alarmePelletsChangeOff = this.homey.flow.getDeviceTriggerCard('pellets_attention_off');
+    this.preAlarmePelets = this.homey.flow.getDeviceTriggerCard('pre_pellets_attention');
+    return this.runOperation(() => sequence(manifest.capabilities.map(id => () =>
+      this.hasCapability(id) ? undefined : this.addCapability(id)))
+      .then(() => this.hasCapability('locked') ? this.removeCapability('locked') : undefined)
+      .then(() => sequence([
+        () => this.initializeValue('stove_ignation', true),
+        () => this.initializeValue('auto_mode', true),
+        () => this.initializeValue('meter_power', 0),
+        () => this.setCapabilityValue('stove_connection', null),
+      ]))
+      .then(() => {
+        const listeners = {
+          target_temperature: 'onCapabilityTargetTemperature', target_power: 'onCapabilityTargetPower',
+          target_fan_speed: 'onCapabilityTargetFanSpeed', onoff: 'onCapabilityOnOff',
+          stove_regulation: 'onCapabilityRegulationMode', stove_ignation: 'onCapabilityLocked',
+          auto_mode: 'onCapabilityAuto',
+        };
+        Object.entries(listeners).forEach(([id, method]) => {
+          this.registerCapabilityListener(id, value => this.runOperation(() => this[method](value)));
+        });
+        this.unloadListener = () => this.stopPolling();
+        this.homey.on('unload', this.unloadListener);
+      }))
+      .then(() => this.onTimeOut().catch(error => this.error('CBox initial update failed', error)))
+      .then(() => this.schedulePoll());
+  }
+
+  initializeValue(id, value) {
+    return this.getCapabilityValue(id) == null ? this.setCapabilityValue(id, value) : Promise.resolve();
+  }
+
+  applySettings(settings) {
+    this.settings = { ...settings };
+    this.stoveIp = settings.ip;
+    this.smartStartEnbale = settings.smartStart;
+    this.smartPauseEnable = settings.smartPause;
+    this.tempSmartPause = settings.pauseTemp;
+    this.useExtCaptor = settings.externalTerm;
+    this.deltaN1 = settings.deltaN1;
+    this.deltaN2 = settings.deltaN2;
+    this.deltaSilence = settings.deltaSilence;
+    this.deltaSilenceEnabled = settings.deltaSilenceEnable;
+  }
+
+  onSettings({ newSettings }) {
+    return this.runOperation(() => {
+      if (!(newSettings.deltaN1 < newSettings.deltaN2 && newSettings.deltaN2 <= newSettings.deltaSilence)) {
+        throw new Error('Temp. N1 < Temp. N2 <= Temp. Silence required');
+      }
+      if (!(newSettings.hgMinTemp < newSettings.hgMaxTemp)) throw new Error('Invalid frost protection temperatures');
+      const check = newSettings.ip !== this.stoveIp
+        ? this.sendHTTPRequest(this.getcallCboxURL('LABL', false, null, newSettings.ip))
+        : Promise.resolve();
+      return check.then(() => {
+        // Homey saves settings after this hook; use the proposed values internally.
+        return this.setCapabilityValue('measure_temperature', this.getCapabilityValue(
+          newSettings.externalTerm ? 'external_temperature' : 'internal_temperature'))
+          .then(() => { this.applySettings(newSettings); });
+      });
+    });
+  }
+
+  schedulePoll() {
+    if (this.disposed) return;
+    if (this.timeoutId != null) this.homey.clearTimeout(this.timeoutId);
+    this.timeoutId = this.homey.setTimeout(() => {
+      this.timeoutId = null;
+      this.onTimeOut().catch(error => this.error('CBox update failed', error))
+        .then(() => this.schedulePoll());
+    }, 60000);
+  }
+
+  stopPolling() {
+    this.disposed = true;
+    if (this.timeoutId != null) this.homey.clearTimeout(this.timeoutId);
+    this.timeoutId = null;
+    if (this.unloadListener) this.homey.removeListener('unload', this.unloadListener);
+    this.unloadListener = null;
+  }
+  onDeleted() { this.stopPolling(); }
+  onUninit() { this.stopPolling(); return this.operationTail || Promise.resolve(); }
+
+  checkComm() { return this.sendHTTPRequest(this.getcallCboxURL('LABL', false)); }
+
+  onTimeOut() {
+    if (this.pollPromise) return this.pollPromise;
+    this.pollPromise = this.runOperation(() =>
+      Promise.resolve().then(() => this.sendHTTPRequest(this.getcallCboxURL('ALLS', false)))
+        .then(data => this.validateSnapshot(data))
+        .then(data => this.updateAllStates(data))
+        .then(() => this.updateEnergyPowerConso())
+        .then(() => this.setCapabilityValue('stove_connection', false))
+        .then(() => this.setAvailable())
+        .then(() => this.onTempChange())
+        .catch(error => this.setCapabilityValue('stove_connection', true)
+          .then(() => this.setUnavailable(error.message))
+          .then(() => { throw error; })))
+      .finally(() => { this.pollPromise = null; });
+    return this.pollPromise;
+  }
+
+  validateSnapshot(data) {
+    if (!data || typeof data !== 'object') throw new Error('Invalid CBox state');
+    return {
+      STATUS: number(data.STATUS, 'STATUS', 0, 65535, true),
+      SETP: number(data.SETP, 'SETP'), PWR: number(data.PWR, 'PWR', 1, 5, true),
+      F2L: number(data.F2L, 'F2L', 0, 7, true), T1: number(data.T1, 'T1'),
+      PQT: number(data.PQT, 'PQT', 0),
+    };
+  }
+
+  updateAllStates(data) {
+    // Publish the whole sample before regulation; two changed temperatures must
+    // not launch two conflicting decisions against a half-updated sample.
+    return sequence([
+      () => this.setCapabilityValue('target_temperature', data.SETP),
+      () => this.setPower(data.PWR),
+      () => this.setFanSpeed(data.F2L),
+      () => this.setCapabilityValue('internal_temperature', data.T1),
+      () => this.setCapabilityValue('measure_temperature', this.useExtCaptor
+        ? this.getCapabilityValue('external_temperature') : data.T1),
+      () => this.setBurnedPellets(data.PQT),
+      () => this.updateStates(data.STATUS),
+      () => this.setStateOnOff(),
+    ]);
+  }
+
+  updateStates(status) {
+    const previous = this.getCapabilityValue('stove_state');
+    const states = { 0: STATE.STOPPED, 3: STATE.STARTING, 6: STATE.STARTED, 10: STATE.STOPPING };
+    const next = states[status] || (status >= 241 && status <= 253 ? STATE.FAULTED : STATE.UNKNOWN);
+    this.stoveState = next;
+    const burning = next === STATE.STARTED || next === STATE.STARTING;
+    let mode = this.regulationMode;
+    if (next === STATE.FAULTED) mode = MODE.STOPPED;
+    else if (mode !== MODE.HG && next !== STATE.UNKNOWN) {
+      if (burning && ![MODE.BURNING, MODE.SILENT, MODE.PAUSED, MODE.STOPPED].includes(mode)) mode = MODE.BURNING;
+      // A physical ignition outside Homey must be reflected, except after our OFF.
+      if (burning && mode === MODE.STOPPED && !this.pendingOff) mode = MODE.BURNING;
+      if (!burning && ![MODE.STOPPED, MODE.PAUSED, MODE.WAITING].includes(mode)) mode = MODE.STOPPED;
+    }
+    if (!burning) this.pendingOff = false;
+    const alarm = status === 253;
+    const oldAlarm = this.getCapabilityValue('alarm_pellets');
+    return this.setCapabilityValue('stove_state', next)
+      .then(() => this.setRegulation(mode))
+      .then(() => this.setCapabilityValue('alarm_pellets', alarm))
+      .then(() => alarm && !oldAlarm ? this.alarmePelletsChange.trigger(this, {}, {}) : undefined)
+      .then(() => oldAlarm && !alarm ? this.setPelletsReloadDone() : undefined)
+      .then(() => previous !== next ? this.driver.triggerFlowOnStateChange(this, next) : undefined);
+  }
+
+  setRegulation(mode) {
+    return this.setCapabilityValue('stove_regulation', mode).then(() => { this.regulationMode = mode; });
+  }
+  setStateOnOff() {
+    return this.setCapabilityValue('onoff', this.regulationMode !== MODE.STOPPED);
+  }
+
+  updateEnergyPowerConso() {
+    const now = Date.now();
+    const lastPower = this.getCapabilityValue('measure_power');
+    const lastEnergy = this.getCapabilityValue('meter_power');
+    const elapsed = Math.max(0, now - this.lastEnergyUpdate);
+    const energy = (finite(lastEnergy) ? lastEnergy : 0)
+      + (finite(lastPower) ? lastPower : 0) * elapsed / 3600000000;
+    const fanPower = [10, 22, 35, 35, 47.5, 47.5, 49, 33];
+    const power = this.stoveState === STATE.STARTING ? 345
+      : this.stoveState === STATE.STARTED ? fanPower[Number(this.getCapabilityValue('target_fan_speed'))]
+        : this.stoveState === STATE.STOPPING ? 33
+          : [STATE.STOPPED, STATE.FAULTED].includes(this.stoveState) ? 1.3 : null;
+    return this.setCapabilityValue('meter_power', energy)
+      .then(() => { this.lastEnergyUpdate = now; })
+      .then(() => this.setCapabilityValue('measure_power', power));
+  }
+
+  setBurnedPellets(kilos) {
+    const index = this.getStoreValue('reloadDoneIndex');
+    const baseline = finite(index) && index <= kilos ? index : kilos;
+    const consumed = kilos - baseline;
+    return Promise.resolve()
+      .then(() => baseline !== index ? this.setStoreValue('reloadDoneIndex', baseline) : undefined)
+      .then(() => this.setCapabilityValue('pellets_burned', kilos))
+      .then(() => this.setCapabilityValue('pellets_burned_since_load', consumed))
+      .then(() => {
+        if (this.settings.withPreAlarm && consumed >= this.settings.deltaPelletsBurned
+          && !this.getStoreValue('prePelletsAttentionSended')) {
+          return this.preAlarmePelets.trigger(this, {}, {})
+            .then(() => this.setStoreValue('prePelletsAttentionSended', true));
+        }
+      });
+  }
+
+  setPelletsReloadDone() {
+    const kilos = this.getCapabilityValue('pellets_burned');
+    if (!finite(kilos)) return Promise.reject(new Error('Pellet counter unavailable'));
+    return this.setStoreValue('reloadDoneIndex', kilos)
+      .then(() => this.setCapabilityValue('pellets_burned_since_load', 0))
+      .then(() => this.setStoreValue('prePelletsAttentionSended', false))
+      .then(() => this.alarmePelletsChangeOff.trigger(this, {}, {}));
+  }
+
+  setFanSpeed(value) { return this.setCapabilityValue('target_fan_speed', String(value)); }
+  setPower(value) { return this.setCapabilityValue('target_power', String(value)); }
+  setTargetTemperature(value) {
+    return this.setCapabilityValue('target_temperature', value).then(() => this.onTempChange());
+  }
+  setCurrentTemp(value) {
+    return this.setCapabilityValue('measure_temperature', value).then(() => this.onTempChange());
+  }
+  setExternalTemp(value) {
+    const temp = number(value, 'external temperature');
+    return this.setCapabilityValue('external_temperature', temp)
+      .then(() => this.useExtCaptor ? this.setCurrentTemp(temp) : undefined);
+  }
+  setInternalTemp(value) {
+    const temp = number(value, 'internal temperature');
+    return this.setCapabilityValue('internal_temperature', temp)
+      .then(() => !this.useExtCaptor ? this.setCurrentTemp(temp) : undefined);
+  }
+
+  setPreset(value) {
+    const preset = number(value, 'preset', 0, 3, true);
+    const power = this.settings[preset === 3 ? 'presetSilenceBurningPower' : `preset${preset}BurningPower`];
+    const fan = preset === 3 || this.regulationMode === MODE.SILENT ? 0 : this.settings[`preset${preset}FanSpeed`];
+    return this.applyPreset(power, fan);
+  }
+  setHGPreset() { return this.applyTargetPresetForHG(); }
+  applyTargetPresetForHG() {
+    return this.applyPreset(this.settings.presetHGBurningPower, this.settings.presetHGFanSpeed);
+  }
+  applyTargetPresetForCurrentTemp() {
+    const temp = this.getCapabilityValue('measure_temperature');
+    const target = this.getCapabilityValue('target_temperature');
+    if (!finite(temp) || !finite(target)) return Promise.resolve();
+    const delta = temp - target;
+    const preset = delta < this.deltaN1 ? 0 : delta < this.deltaN2 ? 1
+      : this.deltaSilenceEnabled && delta >= this.deltaSilence ? 3 : 2;
+    return this.setPreset(preset);
+  }
+  applyPreset(power, fanSpeed) {
+    const p = number(power, 'power', 1, 5, true);
+    const f = number(fanSpeed, 'fan speed', 0, 7, true);
+    return this.sendHTTPRequest(this.getcallCboxURL('RFAN', true, f))
+      .then(() => this.setFanSpeed(f))
+      .then(() => this.sendHTTPRequest(this.getcallCboxURL('POWR', true, p)))
+      .then(() => this.setPower(p));
+  }
+
+  isRegulationMode(mode) { return this.getCapabilityValue('stove_regulation') === mode; }
+  isSmartStartEnabled() { return this.smartStartEnbale === true; }
+  isSmartPauseEnabled() { return this.smartPauseEnable === true; }
+  isIgnationAllowed() { return this.getCapabilityValue('stove_ignation') === true; }
+  isAutoModeEnable() { return this.getCapabilityValue('auto_mode') === true; }
+
+  isCanStartWSStartKnonwTemp() {
+    if (!this.isIgnationAllowed() || this.stoveState !== STATE.STOPPED) return false;
+    if (!this.smartStartEnbale && this.regulationMode !== MODE.PAUSED) return true;
+    const temp = this.getCapabilityValue('measure_temperature');
+    const target = this.getCapabilityValue('target_temperature');
+    if (!finite(temp) || !finite(target)) return false;
+    if (this.regulationMode === MODE.PAUSED) return temp <= target + this.settings.restartPauseTemp;
+    return temp <= target;
+  }
+  isCanPauseWKnonwTemp() {
+    const temp = this.getCapabilityValue('measure_temperature');
+    const target = this.getCapabilityValue('target_temperature');
+    return this.smartPauseEnable === true && this.stoveState === STATE.STARTED
+      && finite(temp) && finite(target) && temp >= target + this.tempSmartPause;
+  }
+  isCanStartForHG() {
+    const temp = this.getCapabilityValue('measure_temperature');
+    return this.isIgnationAllowed() && this.stoveState === STATE.STOPPED
+      && finite(temp) && temp <= this.settings.hgMinTemp;
+  }
+  isCanPauseForHG() {
+    const temp = this.getCapabilityValue('measure_temperature');
+    return this.stoveState === STATE.STARTED && (!finite(temp) || temp > this.settings.hgMaxTemp);
+  }
+
+  onTempChange() {
+    if (!this.isAutoModeEnable()) return Promise.resolve();
+    const mode = this.regulationMode;
+    if ([MODE.WAITING, MODE.PAUSED].includes(mode) && this.isCanStartWSStartKnonwTemp()) {
+      return this.applyTargetPresetForCurrentTemp()
+        .then(() => this.setOnOffPoele(true))
+        .then(() => this.setRegulation(MODE.BURNING));
+    }
+    if ([MODE.BURNING, MODE.SILENT].includes(mode)) {
+      if (this.isCanPauseWKnonwTemp()) {
+        return this.setOnOffPoele(false).then(() => this.setRegulation(MODE.PAUSED));
+      }
+      if (mode === MODE.BURNING && [STATE.STARTING, STATE.STARTED].includes(this.stoveState)) {
+        return this.applyTargetPresetForCurrentTemp();
+      }
+    }
+    if (mode === MODE.HG) {
+      if (this.isCanPauseForHG()) return this.setOnOffPoele(false);
+      if (this.isCanStartForHG()) return this.applyTargetPresetForHG().then(() => this.setOnOffPoele(true));
+    }
+    return Promise.resolve();
+  }
+
+  setIgnationAllowed(value) {
+    if (typeof value !== 'boolean') throw new Error('Invalid ignition permission');
+    return this.setCapabilityValue('stove_ignation', value)
+      .then(() => value ? this.onTempChange() : undefined);
+  }
+  enableAutoMode(value) {
+    if (typeof value !== 'boolean') throw new Error('Invalid automatic mode');
+    return this.setCapabilityValue('auto_mode', value).then(() => value ? this.onTempChange() : undefined);
+  }
+  setSilenceMode(value) { return this.changeSetting('deltaSilenceEnable', value); }
+  setSmartPause(value) { return this.changeSetting('smartPause', value); }
+  changeSetting(key, value) {
+    if (typeof value !== 'boolean') throw new Error(`Invalid ${key}`);
+    return this.setSettings({ [key]: value })
+      .then(() => { this.applySettings({ ...this.settings, [key]: value }); })
+      .then(() => this.onTempChange());
+  }
+  onCapabilityLocked(value) { return this.setIgnationAllowed(value); }
+  onCapabilityAuto(value) { return this.enableAutoMode(value); }
+
+  onCapabilityTargetTemperature(value) {
+    const temp = Math.round(number(value, 'target temperature', 15, 30));
+    return this.sendHTTPRequest(this.getcallCboxURL('SETP', true, temp))
+      .then(() => this.setTargetTemperature(temp));
+  }
+  onCapabilityTargetPower(value) {
+    if (this.isAutoModeEnable()) throw new Error('AUTO_MODE_ENABLED');
+    const power = number(value, 'power', 1, 5, true);
+    return this.sendHTTPRequest(this.getcallCboxURL('POWR', true, power)).then(() => this.setPower(power));
+  }
+  onCapabilityTargetFanSpeed(value) {
+    if (this.isAutoModeEnable()) throw new Error('AUTO_MODE_ENABLED');
+    const speed = number(value, 'fan speed', 0, 7, true);
+    return this.sendHTTPRequest(this.getcallCboxURL('RFAN', true, speed)).then(() => this.setFanSpeed(speed));
+  }
+
+  onCapabilityOnOff(value) {
+    if (typeof value !== 'boolean') throw new Error('Invalid on/off value');
+    if (!value) {
+      const stop = [STATE.STOPPED, STATE.STOPPING].includes(this.stoveState)
+        ? Promise.resolve() : this.setOnOffPoele(false);
+      return stop.then(() => this.setRegulation(MODE.STOPPED)).then(() => this.setStateOnOff());
+    }
+    if (!this.isIgnationAllowed()) throw new Error('Ignition is disabled');
+    if (this.stoveState !== STATE.STOPPED) throw new Error(this.homey.__('illegalStateOnOff'));
+    const canStart = !this.isAutoModeEnable() || this.isCanStartWSStartKnonwTemp();
+    return (canStart ? this.setOnOffPoele(true) : Promise.resolve())
+      .then(() => this.setRegulation(canStart ? MODE.BURNING : MODE.WAITING))
+      .then(() => this.setStateOnOff());
+  }
+
+  onCapabilityRegulationMode(value) {
+    if (!Object.values(MODE).includes(value) || value === MODE.WAITING) {
+      throw new Error(this.homey.__('manualActionImpossible'));
+    }
+    if (value === MODE.STOPPED) return this.onCapabilityOnOff(false);
+    if (value === MODE.HG) {
+      if (![STATE.STOPPED, STATE.STARTED].includes(this.stoveState)) throw new Error(this.homey.__('illegalRegulationMode'));
+      return this.applyTargetPresetForHG()
+        .then(() => this.isCanStartForHG() ? this.setOnOffPoele(true)
+          : this.isCanPauseForHG() ? this.setOnOffPoele(false) : undefined)
+        .then(() => this.setRegulation(MODE.HG)).then(() => this.setStateOnOff());
+    }
+    if (!this.getCapabilityValue('onoff')) throw new Error(this.homey.__('illegalRegulationMode'));
+    if (value === MODE.PAUSED && this.stoveState === STATE.STARTED) {
+      return this.setOnOffPoele(false).then(() => this.setRegulation(value));
+    }
+    if (value === MODE.BURNING && this.stoveState === STATE.STOPPED) {
+      if (!this.isIgnationAllowed() || (this.isAutoModeEnable() && !this.isCanStartWSStartKnonwTemp())) {
+        throw new Error(this.homey.__('illegalRegulationMode'));
+      }
+      return this.setOnOffPoele(true).then(() => this.setRegulation(value));
+    }
+    if ([MODE.BURNING, MODE.SILENT].includes(value) && [STATE.STARTED, STATE.STARTING].includes(this.stoveState)) {
+      const previous = this.regulationMode;
+      this.regulationMode = value;
+      return this.applyTargetPresetForCurrentTemp()
+        .then(() => this.setRegulation(value))
+        .catch(error => { this.regulationMode = previous; throw error; });
+    }
+    throw new Error(this.homey.__('manualActionImpossible'));
+  }
+
+  getcallCboxURL(command, isSet, value, address = this.stoveIp) {
+    if (typeof address !== 'string' || !address.trim()) throw new Error('ERROR_NO_IP');
+    const base = new URL(`http://${address.trim()}`);
+    if (base.username || base.password || base.pathname !== '/' || base.search || base.hash) throw new Error('Invalid CBox address');
+    const parts = isSet ? ['SET', command, value] : ['GET', command];
+    return `${base.origin}/cgi-bin/sendmsg.lua?cmd=${parts.map(part => encodeURIComponent(part)).join('+')}`;
+  }
+  getOnOffRequestURL(on) {
+    return this.getcallCboxURL('LABL', false).replace('GET+LABL', `CMD+${on ? 'ON' : 'OFF'}`);
+  }
+  setOnOffPoele(on) {
+    if (on && !this.isIgnationAllowed()) return Promise.reject(new Error('Ignition is disabled'));
+    if (on && this.stoveState !== STATE.STOPPED) return Promise.reject(new Error('Stove is not stopped'));
+    return this.sendHTTPRequest(this.getOnOffRequestURL(on)).then(() => {
+      // Until the next sample, prevent another decision from repeating ON/OFF.
+      this.stoveState = on ? STATE.STARTING : STATE.STOPPING;
+      this.pendingOff = !on;
+      // The public state and its Flow trigger are updated together by polling.
+    });
+  }
+  sendHTTPRequest(url) {
+    if (this.disposed) return Promise.reject(new Error('CBox device stopped'));
+    return request(url);
+  }
 }
-
 module.exports = CBoxDevice;

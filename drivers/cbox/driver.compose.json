@@ -176,7 +176,7 @@
             "fr" : "Poids en kilos de granulés consommés depuis le dernier chargement qui déclenche la prés alarme",
             "en" : "Weight in kilos of pellets consumed since the last load that triggered the pre-alarm"
           },
-          "nim": 1,
+          "min": 1,
           "max": 30,
           "value": 10,
           "type" : "number",
@@ -488,7 +488,7 @@
     "target_temperature" : {
       "min" : 15,
       "max" : 30,
-      "step" : 0.5
+      "step" : 1
     },
     "onoff" : {
       "title" : {

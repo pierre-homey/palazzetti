@@ -1,7 +1,7 @@
 {
   "type": "enum",
   "getable": true,
-  "setable": true,
+  "setable": false,
   "title": {
     "fr": "Etat",
     "en": "State"

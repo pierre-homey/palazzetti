@@ -1,14 +1,9 @@
 'use strict';
-
 const Homey = require('homey');
-
 class PalazzettiApp extends Homey.App {
-  /**
-   * onInit is called when the app is initialized.
-   */
-  async onInit() {
+  onInit() {
     this.log('PalazzettiApp has been initialized');
+    return Promise.resolve();
   }
 }
-
 module.exports = PalazzettiApp;

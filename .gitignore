@@ -1,5 +1,5 @@
-
 .DS_Store
-drivers/.DS_Store
-drivers/cbox/.DS_Store
-drivers/cbox/images/.DS_Store
+node_modules/
+.homeybuild/
+.homeyTOTO/
+coverage/

@@ -4,5 +4,10 @@
   "main": "app.js",
   "devDependencies": {
     "homey": "^2.0.6"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "lint": "eslint app.js drivers lib test",
+    "validate": "homey app validate"
   }
 }
