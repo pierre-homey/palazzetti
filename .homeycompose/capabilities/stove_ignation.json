@@ -1,0 +1,11 @@
+{
+  "type": "boolean",
+  "getable": true,
+  "setable": true,
+  "title": {
+    "fr": "Allumage autorisé",
+    "en": "Ignition allowed"
+  },
+  "uiComponent": "button",
+  "icon": "/assets/block_start.svg"
+}

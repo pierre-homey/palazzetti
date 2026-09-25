@@ -1,0 +1,32 @@
+{
+  "1.2.1": {
+    "en": "Suivi de la consommation des pellets"
+  },
+  "1.3.0": {
+    "en": "Correction of bugs and wording"
+  },
+  "1.3.1": {
+    "en": "Bug and wording corrections"
+  },
+  "1.3.2": {
+    "en": "Bug correction"
+  },
+  "1.3.3": {
+    "en": "Corrections mineurs"
+  },
+  "1.4.0": {
+    "en": "Améliorations, corrections de bugs et target de températures par pas de 0.5°"
+  },
+  "1.4.1": {
+    "en": "Correction d'un bug qui évite le crash de l'appli et ajout de la puissance et l'énergie électrique consommée (estimation)"
+  },
+  "1.4.2": {
+    "en": "Correction d'un bug qui évite le crash de l'appli et ajout de la puissance et l'énergie électrique consommée (estimation)"
+  },
+  "1.4.3": {
+    "en": "Bug corrections"
+  },
+  "1.5.0": {
+    "en": "Bug corrections"
+  }
+}

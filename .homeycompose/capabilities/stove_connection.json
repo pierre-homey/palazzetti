@@ -1,0 +1,28 @@
+{
+  "type": "boolean",
+  "getable": true,
+  "setable": false,
+  "title": {
+    "fr": "Alarme Connexion",
+    "en": "Alarm Connection"
+  },
+  "titleTrue":{
+    "fr": "Déconnecté",
+    "en": "Offline"
+  },
+  "titleFalse":{
+    "fr": "Connecté",
+    "en": "Online"
+  },
+  "insightsTitleTrue":{
+    "fr": "Déconnecté",
+    "en": "Offline"
+  },
+  "insightsTitleFalse":{
+    "fr": "Connecté",
+    "en": "Online"
+  },
+  "uiComponent": "sensor",
+  "insights": true,
+  "icon": "/assets/connected.svg"
+}

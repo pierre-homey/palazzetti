@@ -1,0 +1,15 @@
+{
+  "type": "number",
+  "setable": true,
+  "getable": true,
+  "title": {
+    "fr": "Granulés consommés depuis recharge",
+    "en": "Pellets burned since last load"
+  },
+  "unit":{
+    "en":"Kg",
+    "fr":"Kg"
+  },
+  "uiComponent": null,
+  "icon": "/assets/pellets_alarm.svg"
+}

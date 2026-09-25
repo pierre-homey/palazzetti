@@ -1,0 +1,11 @@
+{
+  "type": "number",
+  "setable": true,
+  "getable": true,
+  "title": {
+    "fr": "Thermomètre interne",
+    "en": "Internal thermometer"
+  },
+  "uiComponent": "sensor",
+  "icon": "/assets/thermometer.svg"
+}

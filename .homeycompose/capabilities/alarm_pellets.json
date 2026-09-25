@@ -1,0 +1,11 @@
+{
+  "type": "boolean",
+  "getable": true,
+  "setable": true,
+  "title": {
+    "fr": "Alarme Pellets",
+    "en": "Pellets Alarm"
+  },
+  "uiComponent": "sensor",
+  "icon": "/assets/pellets_alarm.svg"
+}

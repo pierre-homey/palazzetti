@@ -1,0 +1,55 @@
+{
+  "type": "enum",
+  "getable": true,
+  "setable": true,
+  "title": {
+    "fr": "Etat",
+    "en": "State"
+  },
+  "uiComponent": "sensor",
+  "icon": "/assets/icon.svg",
+  "values": [
+    {
+      "id": "STOPPED",
+      "title": {
+        "fr": "ARRETÉ",
+        "en": "STOPPED"
+      }
+    },
+    {
+      "id": "STARTING",
+      "title": {
+        "fr": "ALLUMAGE",
+        "en": "IGNATION"
+      }
+    },
+    {
+      "id": "STARTED",
+      "title": {
+        "fr": "ALLUMÉ",
+        "en": "BURNING"
+      }
+    },
+    {
+      "id": "STOPPING",
+      "title": {
+        "fr": "EN ARRÊT",
+        "en": "STOPPING"
+      }
+    },
+    {
+      "id": "UNKNOW",
+      "title": {
+        "fr": "INCONNU",
+        "en": "UNKNOW"
+      }
+    },
+    {
+      "id": "FAULTED",
+      "title": {
+        "fr": "EN DÉFAUT",
+        "en": "FAULTED"
+      }
+    }
+  ]
+}

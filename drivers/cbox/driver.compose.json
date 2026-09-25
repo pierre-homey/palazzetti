@@ -1,4 +1,8 @@
 {
+  "name" : {
+    "fr" : "CBox Palazzetti",
+    "en" : "Palazzetti CBOX"
+  },
   "class" : "heater",
   "capabilities" : [
     "onoff",
@@ -6,10 +10,503 @@
     "measure_temperature",
     "target_power",
     "target_fan_speed",
-    "stove_regulation"
+    "alarm_pellets",
+    "stove_state",
+    "stove_regulation",
+    "external_temperature",
+    "internal_temperature",
+    "stove_connection",
+    "pellets_burned",
+    "pellets_burned_since_load",
+    "auto_mode",
+    "stove_ignation",
+    "measure_power", "meter_power"
   ],
-  "name" : {
-    "en" : "CBox Driver",
-    "fr" : "Driver CBox"
+  "pair" : [
+    {
+      "id" : "list_devices",
+      "template" : "list_devices",
+      "navigation" : {
+        "next" : "add_devices"
+      },
+      "options" : {
+        "singular" : true
+      }
+    },
+    {
+      "id" : "add_devices",
+      "template" : "add_devices"
+    }
+  ],
+  "settings" : [
+    {
+      "type" : "group",
+      "label" : {
+        "en" : "General Settings",
+        "fr" : "Paramètres Généraux"
+      },
+      "children" : [
+        {
+          "id" : "ip",
+          "type" : "text",
+          "label" : {
+            "en" : "IP Adress",
+            "fr" : "Adresse IP"
+          }
+        },
+        {
+          "id" : "externalTerm",
+          "hint" : {
+            "fr" : "Indique si le SmartStart et le SmartPause doivent utiliser la sonde de température interne au poêle ou une sonde de température déportée dont la mise à jour est réalisée par un flow homey",
+            "en" : "Indicates whether the SmartStart and SmartPause must use the internal temperature sensor of the stove or a remote temperature sensor updated by a flow"
+          },
+          "type" : "checkbox",
+          "value" : true,
+          "label" : {
+            "en" : "Use of an deported thermometer",
+            "fr" : "Utilisation thermomètre déporté"
+          }
+        }
+      ]
+    },
+    {
+      "type" : "group",
+      "label" : {
+        "en" : "SmartStart parameters",
+        "fr" : "Paramètres du Smart Start"
+      },
+      "children" : [
+        {
+          "id" : "smartStart",
+          "hint" : {
+            "fr" : "Le démarrage intelligent n'active pas le poêl si la température de la pièce est supérieur ou égale à la température de consigne",
+            "en" : "Smart start does not activate the stove if the room temperature is greater than or equal to the target temperature"
+          },
+          "type" : "checkbox",
+          "value" : true,
+          "label" : {
+            "en" : "Smart Start",
+            "fr" : "Démarrage intelligent"
+          }
+        }
+      ]
+    },
+    {
+      "type" : "group",
+      "label" : {
+        "en" : "SmartPause parameters",
+        "fr" : "Paramètres du Smart Pause"
+      },
+      "children" : [
+        {
+          "id" : "smartPause",
+          "hint" : {
+            "fr" : "La pause intelligente met automatiquement le poêle en pause si la température indiquée est attente pendant le laps de temps spécifié.",
+            "en" : "Smart Pause automatically pauses the stove if the specified temperature is held for the specified amount of time."
+          },
+          "type" : "checkbox",
+          "value" : true,
+          "label" : {
+            "en" : "Smart Pause",
+            "fr" : "Smart Pause"
+          }
+        },
+        {
+          "id" : "pauseTemp",
+          "hint" : {
+            "fr" : "Indique la différence de température qui déclenche la mise en pause de la régulation",
+            "en" : "Indicates the temperature delta that triggers the pause of the regulation"
+          },
+          "type" : "number",
+          "value" : 3,
+          "min" : 0.5,
+          "label" : {
+            "en" : "Temp. Delta for pause",
+            "fr" : "Delta de Temp. pour Pause"
+          },
+          "units" : {
+            "fr" : "°",
+            "en" : "°"
+          }
+        },
+        {
+          "id" : "restartPauseTemp",
+          "hint" : {
+            "fr" : "Indique la différence de température qui déclenche la remise en chauffe de la régulation",
+            "en" : "Indicates the temperature delta that triggers the burning regulation mode"
+          },
+          "type" : "number",
+          "value" : 0,
+          "max" : 0.5,
+          "min" : -3,
+          "label" : {
+            "en" : "Temp. Delta for burning",
+            "fr" : "Delta de Temp. pour reprise"
+          },
+          "units" : {
+            "fr" : "°",
+            "en" : "°"
+          }
+        }
+      ]
+    },
+    {
+      "type" : "group",
+      "label" : {
+        "fr" : "Paramètres de la pré alarme granulés",
+        "en" : "Pellet pre-alarm parameters"
+      },
+      "children" : [
+        {
+          "id" : "withPreAlarm",
+          "hint" : {
+            "fr" : "Indique si la prés-alarme doit être levé si les conditions le permetttent",
+            "en" : "Indicates whether the pre-alarm should be raised if conditions permit"
+          },
+          "type" : "checkbox",
+          "value" : true,
+          "label" : {
+            "fr" : "Pre Alarme granulés",
+            "en" : "Post pellets alarm"
+          }
+        },
+        {
+          "id" : "deltaPelletsBurned",
+          "hint" : {
+            "fr" : "Poids en kilos de granulés consommés depuis le dernier chargement qui déclenche la prés alarme",
+            "en" : "Weight in kilos of pellets consumed since the last load that triggered the pre-alarm"
+          },
+          "nim": 1,
+          "max": 30,
+          "value": 10,
+          "type" : "number",
+          "label" : {
+            "fr" : "Kilos brulés depuis la dernière recharge",
+            "en" : "Kilos burned since the last recharge"
+          },
+          "units" : {
+            "fr" : "Kg",
+            "en" : "Kg"
+          }
+        }
+      ]
+    },
+    {
+      "type" : "group",
+      "label" : {
+        "en" : "Power modulation parameters",
+        "fr" : "Paramètres de modulation de puissance"
+      },
+      "children" : [
+        {
+          "type" : "group",
+          "label" : {
+            "fr" : "Préréglage 0",
+            "en" : "Preset 0"
+          },
+          "children" : [
+            {
+              "id" : "preset0BurningPower",
+              "min" : 1,
+              "max" : 5,
+              "value" : 3,
+              "type" : "number",
+              "hint" : {
+                "fr" : "Puissance du poêle pour le préréglage 0 appliqué lorsque la température est inférieur à la température de consigne",
+                "en" : "Stove power for preset 0 applied when the temperature is lower than the target temperature"
+              },
+              "label" : {
+                "fr" : "Puissance de chauffe",
+                "en" : "Power"
+              }
+            },
+            {
+              "id" : "preset0FanSpeed",
+              "min" : 0,
+              "max" : 7,
+              "value" : 2,
+              "type" : "number",
+              "hint" : {
+                "fr" : "Vitesse de ventilation du poêle pour le préréglage 0 appliqué lorsque la température est inférieur à la température de consigne\n0= Arrêt\n6= Max\n7= Auto",
+                "en" : "Stove fan speed for preset 0 applied when the temperature is lower than the target temperature\n0= Stopped\n6= Max\n7= Auto"
+              },
+              "label" : {
+                "fr" : "Vitesse de ventilation",
+                "en" : "Fan speed"
+              }
+            }
+          ]
+        },
+        {
+          "type" : "group",
+          "label" : {
+            "fr" : "Préréglage 1",
+            "en" : "Preset 1"
+          },
+          "children" : [
+            {
+              "id" : "deltaN1",
+              "hint" : {
+                "fr" : "Indique la différence de température avec la température de consigne qui déclenche l’application de ce pré-réglage",
+                "en" : "Indicates the temperature difference with the tagret temperature that triggers the application of this pre-setting"
+              },
+              "type" : "number",
+              "value" : 1,
+              "min" : -1,
+              "label" : {
+                "en" : "Temp. Delta",
+                "fr" : "Delta de Température"
+              },
+              "units" : {
+                "fr" : "°",
+                "en" : "°"
+              }
+            },
+            {
+              "id" : "preset1BurningPower",
+              "min" : 1,
+              "max" : 5,
+              "value" : 3,
+              "type" : "number",
+              "hint" : {
+                "fr" : "Puissance du poêle pour le préréglage 1",
+                "en" : "Stove power for preset 1"
+              },
+              "label" : {
+                "fr" : "Puissance de chauffe",
+                "en" : "Power"
+              }
+            },
+            {
+              "id" : "preset1FanSpeed",
+              "min" : 0,
+              "max" : 7,
+              "value" : 2,
+              "type" : "number",
+              "hint" : {
+                "fr" : "Vitesse de ventilation du poêle pour le préréglage 1\n0= Arrêt\n6= Max\n7= Auto",
+                "en" : "Stove fan speed for preset 1\n0= Stopped\n6= Max\n7= Auto"
+              },
+              "label" : {
+                "fr" : "Vitesse de ventilation",
+                "en" : "Fan speed"
+              }
+            }
+          ]
+        },
+        {
+          "type" : "group",
+          "label" : {
+            "fr" : "Préréglage 2",
+            "en" : "Preset 2"
+          },
+          "children" : [
+            {
+              "id" : "deltaN2",
+              "hint" : {
+                "fr" : "Indique la différence de température avec la température de consigne qui déclenche l’application de ce pré-réglage",
+                "en" : "Indicates the temperature difference that triggers the application of this pre-setting"
+              },
+              "type" : "number",
+              "value" : 2,
+              "min" : -0.5,
+              "label" : {
+                "en" : "Temp. Delta",
+                "fr" : "Delta de Température"
+              },
+              "units" : {
+                "fr" : "°",
+                "en" : "°"
+              }
+            },
+            {
+              "id" : "preset2BurningPower",
+              "min" : 1,
+              "max" : 5,
+              "value" : 3,
+              "type" : "number",
+              "hint" : {
+                "fr" : "Puissance du poêle pour le préréglage 2",
+                "en" : "Stove power for preset 2"
+              },
+              "label" : {
+                "fr" : "Puissance de chauffe",
+                "en" : "Power"
+              }
+            },
+            {
+              "id" : "preset2FanSpeed",
+              "min" : 0,
+              "max" : 7,
+              "value" : 2,
+              "type" : "number",
+              "hint" : {
+                "fr" : "Vitesse de ventilation du poêle pour le préréglage 2\n0= Arrêt\n6= Max\n7= Auto",
+                "en" : "Stove fan speed for preset 2\n0= Stopped\n6= Max\n7= Auto"
+              },
+              "label" : {
+                "fr" : "Vitesse de ventilation",
+                "en" : "Fan speed"
+              }
+            }
+          ]
+        },
+        {
+          "type" : "group",
+          "label" : {
+            "fr" : "Préréglage Silence",
+            "en" : "Silence Preset"
+          },
+          "children" : [
+            {
+              "id" : "deltaSilenceEnable",
+              "hint" : {
+                "fr" : "Active ou Désactive ce préréglage",
+                "en" : "Enable or Disable this preset"
+              },
+              "type" : "checkbox",
+              "label" : {
+                "en" : "Enable",
+                "fr" : "Activé"
+              },
+              "value" : true
+            },
+            {
+              "id" : "deltaSilence",
+              "hint" : {
+                "fr" : "Indique la différence de température avec la température de consigne qui déclenche l’application du mode silence",
+                "en" : "Indicates the temperature difference that triggers the application of this silence setting"
+              },
+              "type" : "number",
+              "value" : 2,
+              "min" : 0,
+              "label" : {
+                "en" : "Temp. Delta",
+                "fr" : "Delta de Température"
+              },
+              "units" : {
+                "fr" : "°",
+                "en" : "°"
+              }
+            },
+            {
+              "id" : "presetSilenceBurningPower",
+              "min" : 1,
+              "max" : 5,
+              "value" : 1,
+              "type" : "number",
+              "hint" : {
+                "fr" : "Puissance du poêle pour le préréglage silence",
+                "en" : "Stove power for preset silence"
+              },
+              "label" : {
+                "fr" : "Puissance de chauffe",
+                "en" : "Power"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type" : "group",
+      "label" : {
+        "en" : "Frost Protection parameters",
+        "fr" : "Paramètres Hors Gel"
+      },
+      "children" : [
+        {
+          "id" : "hgMinTemp",
+          "hint" : {
+            "fr" : "Indique la température qui déclenchera l’allumage du poêle en mode Hors Gel",
+            "en" : "Indicates the temperature that will trigger the ignition of the stove in Frost Protection mod"
+          },
+          "type" : "number",
+          "value" : 14,
+          "min" : 5,
+          "label" : {
+            "en" : "Min temperature",
+            "fr" : "Température minimale"
+          },
+          "units" : {
+            "fr" : "°",
+            "en" : "°"
+          }
+        },
+        {
+          "id" : "hgMaxTemp",
+          "hint" : {
+            "fr" : "Indique la température qui déclenchera la pause du poêle en mode Hors Gel",
+            "en" : "Indicates the temperature that will trigger the pause of the stove in Frost Protection mode"
+          },
+          "type" : "number",
+          "value" : 16,
+          "max" : 18,
+          "label" : {
+            "en" : "Max temperature",
+            "fr" : "Température maximale"
+          },
+          "units" : {
+            "fr" : "°",
+            "en" : "°"
+          }
+        },
+        {
+          "id" : "presetHGBurningPower",
+          "min" : 1,
+          "max" : 5,
+          "value" : 4,
+          "type" : "number",
+          "hint" : {
+            "fr" : "Puissance du poêle pour le mode Hors GEL",
+            "en" : "Stove power for frost protection mode"
+          },
+          "label" : {
+            "fr" : "Puissance de chauffe",
+            "en" : "Power"
+          }
+        },
+        {
+          "id" : "presetHGFanSpeed",
+          "min" : 0,
+          "max" : 7,
+          "value" : 2,
+          "type" : "number",
+          "hint" : {
+            "fr" : "Vitesse de ventilation du poêle pour le mode HG",
+            "en" : "Stove fan speed for preset 0 applied when the temperature is lower than the target temperature\n0= Stopped\n6= Max\n7= Auto"
+          },
+          "label" : {
+            "fr" : "Vitesse de ventilation",
+            "en" : "Fan speed"
+          }
+        }
+      ]
+    }
+  ],
+  "capabilitiesOptions" : {
+    "target_temperature" : {
+      "min" : 15,
+      "max" : 30,
+      "step" : 0.5
+    },
+    "onoff" : {
+      "title" : {
+        "en" : "Stove management",
+        "fr" : "Gestion du poêle"
+      },
+      "uiQuickAction" : true
+    },
+    "measure_power": {
+      "approximated": true,
+      "uiComponent": null
+    },
+    "meter_power": {
+      "uiComponent": null
+    }
+  },
+  "images" : {
+    "large" : "/drivers/cbox/images/large.jpg",
+    "small" : "/drivers/cbox/images/small.jpg"
   }
 }

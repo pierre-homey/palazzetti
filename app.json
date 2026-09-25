@@ -1,269 +1,630 @@
 {
-  "id" : "com.palazzetti",
-  "version" : "1.0.2",
-  "sdk" : 3,
-  "compatibility" : ">=5.0.0",
-  "brandColor" : "#75080a",
-  "name" : {
-    "en" : "Palazzetti CBOX",
-    "fr" : "Palazzetti CBOX"
+  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
+  "id": "com.palazzetti",
+  "version": "1.5.0",
+  "sdk": 3,
+  "compatibility": ">=5.0.0",
+  "brandColor": "#75080a",
+  "name": {
+    "en": "Palazzetti CBOX",
+    "fr": "Palazzetti CBOX"
   },
-  "description" : {
-    "en" : "Adds support for Palazzetti CBOX",
-    "fr" : "Gestion de la CBox de Palazzetti"
+  "description": {
+    "en": "Always have a cosy, warm home, whenever you want.",
+    "fr": "Ayez toujours une maison confortable et chaleureuse, quand vous le souhaitez."
   },
-  "category" : "climate",
-  "author" : {
-    "email" : "pierre-domotique@verron.fr",
-    "name" : "Pierre Verron"
+  "category": "climate",
+  "author": {
+    "email": "pierre-domotique@verron.fr",
+    "name": "Pierre Verron"
   },
-  "capabilities" : {
-    "target_fan_speed" : {
-      "type" : "enum",
-      "setable" : true,
-      "getable" : true,
-      "title" : {
-        "fr" : "Vitesse de ventillation",
-        "en" : "Fan Speed"
-      },
-      "uiComponent" : "picker",
-      "values" : [
-        {
-          "id" : "0",
-          "title" : {
-            "fr" : "Arrêt",
-            "en" : "OFF"
-          }
-        },
-        {
-          "id" : "1",
-          "title" : {
-            "fr" : "1",
-            "en" : "1"
-          }
-        },
-        {
-          "id" : "2",
-          "title" : {
-            "fr" : "2",
-            "en" : "2"
-          }
-        },
-        {
-          "id" : "3",
-          "title" : {
-            "fr" : "3",
-            "en" : "2"
-          }
-        },
-        {
-          "id" : "4",
-          "title" : {
-            "fr" : "4",
-            "en" : "4"
-          }
-        },
-        {
-          "id" : "5",
-          "title" : {
-            "fr" : "5",
-            "en" : "5"
-          }
-        }
-      ]
-    },
-    "target_power" : {
-      "type" : "enum",
-      "getable" : true,
-      "setable" : true,
-      "title" : {
-        "fr" : "Puissance de Chauffe",
-        "en" : "Fire Power"
-      },
-      "uiComponent" : "picker",
-      "values" : [
-        {
-          "id" : "1",
-          "title" : {
-            "fr" : "1",
-            "en" : "1"
-          }
-        },
-        {
-          "id" : "2",
-          "title" : {
-            "fr" : "2",
-            "en" : "1"
-          }
-        },
-        {
-          "id" : "3",
-          "title" : {
-            "fr" : "3",
-            "en" : "1"
-          }
-        },
-        {
-          "id" : "4",
-          "title" : {
-            "fr" : "4",
-            "en" : "1"
-          }
-        },
-        {
-          "id" : "5",
-          "title" : {
-            "fr" : "5",
-            "en" : "5"
-          }
-        }
-      ]
-    },
-    "alarm_pellets" : {
-      "type" : "boolean",
-      "getable" : true,
-      "setable" : true,
-      "title" : {
-        "fr" : "Alarme Pellets",
-        "en" : "Pellets Alarm"
-      },
-      "uiComponent" : "sensor",
-      "icon" : "/assets/pellets_alarm.svg"
-    },
-    "stove_state" : {
-      "type" : "enum",
-      "getable" : true,
-      "setable" : true,
-      "title" : {
-        "fr" : "Etat",
-        "en" : "State"
-      },
-      "uiComponent" : "sensor",
-      "icon" : "/assets/icon.svg",
-      "values" : [
-        {
-          "id" : "STOPPED",
-          "title" : {
-            "fr" : "ARRETÉ",
-            "en" : "STOPPED"
-          }
-        },
-        {
-          "id" : "STARTING",
-          "title" : {
-            "fr" : "ALLUMAGE",
-            "en" : "IGNATION"
-          }
-        },
-        {
-          "id" : "STARTED",
-          "title" : {
-            "fr" : "ALLUMÉ",
-            "en" : "BURNING"
-          }
-        },
-        {
-          "id" : "STOPPING",
-          "title" : {
-            "fr" : "EN ARRÊT",
-            "en" : "STOPPING"
-          }
-        },
-        {
-          "id" : "UNKNOW",
-          "title" : {
-            "fr" : "INCONNU",
-            "en" : "UNKNOW"
-          }
-        },
-        {
-          "id" : "FAULTED",
-          "title" : {
-            "fr" : "EN DÉFAUT",
-            "en" : "FAULTED"
-          }
-        }
-      ]
-    },
-    "stove_regulation" : {
-      "type" : "enum",
-      "getable" : true,
-      "setable" : true,
-      "title" : {
-        "fr" : "Régulation",
-        "en" : "Regulation"
-      },
-      "uiComponent" : "picker",
-      "values" : [
-        {
-          "id" : "SILENTLY",
-          "title" : {
-            "fr" : "SILENCE",
-            "en" : "SILENTLY"
-          }
-        },
-        {
-          "id" : "WAITING_TEMP",
-          "title" : {
-            "fr" : "ATTENTE SMART START",
-            "en" : "WAITING SMART START"
-          }
-        },
-        {
-          "id" : "BURNING",
-          "title" : {
-            "fr" : "EN CHAUFFE",
-            "en" : "BURNING"
-          }
-        },
-        {
-          "id" : "PAUSED",
-          "title" : {
-            "fr" : "EN PAUSE",
-            "en" : "PAUSED"
-          }
-        },
-        {
-          "id" : "STOPPED",
-          "title" : {
-            "fr" : "ARRÊTÉ",
-            "en" : "STOPPED"
-          }
-        }
-      ]
-    },
-    "external_temperature" : {
-      "type" : "number",
-      "setable" : true,
-      "getable" : true,
-      "title" : {
-        "fr" : "Thermomètre déporté",
-        "en" : "Deported thermometer"
-      },
-      "uiComponent" : "sensor",
-      "icon" : "/assets/thermometer.svg"
-    },
-    "internal_temperature" : {
-      "type" : "number",
-      "setable" : true,
-      "getable" : true,
-      "title" : {
-        "fr" : "Thermomètre interne",
-        "en" : "Internal thermometer"
-      },
-      "uiComponent" : "sensor",
-      "icon" : "/assets/thermometer.svg"
-    }
+  "images": {
+    "large": "/assets/images/large.jpg",
+    "small": "/assets/images/small.jpg"
   },
-  "drivers" : [
+  "flow": {
+    "triggers": [
+      {
+        "id": "pellets_attention",
+        "title": {
+          "en": "The pellet container is empty",
+          "fr": "La réserve de granulé est vide"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ]
+      },
+      {
+        "id": "pellets_attention_off",
+        "title": {
+          "en": "The pellet container is refilled",
+          "fr": "La réserve de granulé est rechargée"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ]
+      },
+      {
+        "id": "pre_pellets_attention",
+        "title": {
+          "en": "The pellet container is almost empty",
+          "fr": "La réserve de granulé est bientôt vide"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ]
+      },
+      {
+        "id": "on_state_change",
+        "title": {
+          "en": "State has changed",
+          "fr": "L'état à changé"
+        },
+        "tokens": [
+          {
+            "name": "state",
+            "type": "string",
+            "title": {
+              "fr": "Etat",
+              "en": "State"
+            },
+            "example": "STOPPED"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ]
+      }
+    ],
+    "conditions": [
+      {
+        "id": "isSmartStartEnabled",
+        "title": {
+          "fr": "Le démarrage intelligent !{{est|n'est pas}} activé",
+          "en": "Smartstart !{{is|is not}} enabled"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ]
+      },
+      {
+        "id": "isRegulationInState",
+        "title": {
+          "fr": "La régulation !{{est|n'est pas}} égale à",
+          "en": "Regulation !{{is|is not}} equals to"
+        },
+        "titleFormatted": {
+          "en": "Regulation is equals to [[state]]",
+          "fr": "La régulation est à l'état [[state]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
+            "type": "dropdown",
+            "name": "state",
+            "values": [
+              {
+                "id": "SILENTLY",
+                "title": {
+                  "fr": "SILENCE",
+                  "en": "SILENTLY"
+                }
+              },
+              {
+                "id": "WAITING_TEMP",
+                "title": {
+                  "fr": "ATTENTE SMART START",
+                  "en": "WAITING SMART START"
+                }
+              },
+              {
+                "id": "BURNING",
+                "title": {
+                  "fr": "EN CHAUFFE",
+                  "en": "BURNING"
+                }
+              },
+              {
+                "id": "PAUSED",
+                "title": {
+                  "fr": "EN PAUSE",
+                  "en": "PAUSED"
+                }
+              },
+              {
+                "id": "STOPPED",
+                "title": {
+                  "fr": "ARRÊTÉ",
+                  "en": "STOPPED"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "isSmartPauseEnabled",
+        "title": {
+          "fr": "La pause intelligente !{{est|n'est pas}} activée",
+          "en": "Smart pause !{{is|is not}} enabled"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ]
+      },
+      {
+        "id": "isIgnationAllowed",
+        "title": {
+          "fr": "L'allumage !{{est|n'est pas}} autorisé",
+          "en": "Ignation !{{is|is not}} allowed"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ]
+      },
+      {
+        "id": "isAutoModeEnabled",
+        "title": {
+          "fr": "Le mode auto !{{est|n'est pas}} activé",
+          "en": "Auto mode !{{is|is not}} enabled"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "setTargetPower",
+        "title": {
+          "en": "Set the Power",
+          "fr": "Définir la puissance de chauffe"
+        },
+        "titleFormatted": {
+          "en": "Set the target power to [[target_power]]",
+          "fr": "Définir la puissance de chauffe sur [[target_power]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
+            "name": "target_power",
+            "type": "dropdown",
+            "values": [
+              {
+                "id": "1",
+                "title": {
+                  "fr": "1",
+                  "en": "1"
+                }
+              },
+              {
+                "id": "2",
+                "title": {
+                  "fr": "2",
+                  "en": "1"
+                }
+              },
+              {
+                "id": "3",
+                "title": {
+                  "fr": "3",
+                  "en": "1"
+                }
+              },
+              {
+                "id": "4",
+                "title": {
+                  "fr": "4",
+                  "en": "1"
+                }
+              },
+              {
+                "id": "5",
+                "title": {
+                  "fr": "5",
+                  "en": "5"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "setTargetFanSpeed",
+        "title": {
+          "en": "Set the fan speed",
+          "fr": "Définir la vitesse de ventillation"
+        },
+        "titleFormatted": {
+          "en": "Set the target fan speed to [[target_fan_speed]]",
+          "fr": "Définir la vitesse de ventillation sur [[target_fan_speed]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
+            "name": "target_fan_speed",
+            "type": "dropdown",
+            "values": [
+              {
+                "id": "0",
+                "title": {
+                  "fr": "Arrêt",
+                  "en": "OFF"
+                }
+              },
+              {
+                "id": "1",
+                "title": {
+                  "fr": "1",
+                  "en": "1"
+                }
+              },
+              {
+                "id": "2",
+                "title": {
+                  "fr": "2",
+                  "en": "2"
+                }
+              },
+              {
+                "id": "3",
+                "title": {
+                  "fr": "3",
+                  "en": "2"
+                }
+              },
+              {
+                "id": "4",
+                "title": {
+                  "fr": "4",
+                  "en": "4"
+                }
+              },
+              {
+                "id": "5",
+                "title": {
+                  "fr": "5",
+                  "en": "5"
+                }
+              },
+              {
+                "id": "6",
+                "title": {
+                  "fr": "Max",
+                  "en": "Hight"
+                }
+              },
+              {
+                "id": "7",
+                "title": {
+                  "fr": "Auto",
+                  "en": "Auto"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "setPreset",
+        "title": {
+          "en": "Set preset",
+          "fr": "Appliquer un préréglage"
+        },
+        "titleFormatted": {
+          "en": "Set the target preset to [[preset]]",
+          "fr": "Définir le préréglage sur [[preset]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
+            "name": "preset",
+            "type": "dropdown",
+            "values": [
+              {
+                "id": "0",
+                "title": {
+                  "fr": "Préréglage 0",
+                  "en": "Preset 0"
+                }
+              },
+              {
+                "id": "1",
+                "title": {
+                  "fr": "Préréglage 1",
+                  "en": "Preset 1"
+                }
+              },
+              {
+                "id": "2",
+                "title": {
+                  "fr": "Préréglage 2",
+                  "en": "Preset 2"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "setRegulationInState",
+        "title": {
+          "fr": "Changer le mode de régulation",
+          "en": "Change regulation mode"
+        },
+        "titleFormatted": {
+          "en": "Set the target regulation mode to [[state]]",
+          "fr": "Définir le mode de régulation sur [[state]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
+            "type": "dropdown",
+            "name": "state",
+            "values": [
+              {
+                "id": "SILENTLY",
+                "title": {
+                  "fr": "SILENCE",
+                  "en": "SILENTLY"
+                }
+              },
+              {
+                "id": "BURNING",
+                "title": {
+                  "fr": "EN CHAUFFE",
+                  "en": "BURNING"
+                }
+              },
+              {
+                "id": "PAUSED",
+                "title": {
+                  "fr": "EN PAUSE",
+                  "en": "PAUSED"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "setExternalTemp",
+        "title": {
+          "fr": "Enregistrer température déportée",
+          "en": "Record deported temperature"
+        },
+        "titleFormatted": {
+          "en": "Set the deported temperature to [[temperature]]",
+          "fr": "Définir la température déportée sur [[temperature]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
+            "type": "number",
+            "name": "temperature"
+          }
+        ]
+      },
+      {
+        "id": "setSmartPause",
+        "title": {
+          "fr": "Gestion du SmartPause",
+          "en": "SmartPause management"
+        },
+        "titleFormatted": {
+          "en": "Set the smart pause magement to [[smartPause]]",
+          "fr": "Définir la gestion du SmartPause sur [[smartPause]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
+            "type": "dropdown",
+            "name": "smartPause",
+            "values": [
+              {
+                "id": "1",
+                "title": {
+                  "fr": "Activer SmartPause",
+                  "en": "Enable SmartPause"
+                }
+              },
+              {
+                "id": "2",
+                "title": {
+                  "fr": "Désactiver SmartPause",
+                  "en": "Disable SmartPause"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "setIgnationAllowed",
+        "title": {
+          "fr": "Gestion de l'autorisation d'allumage",
+          "en": "Managing ignation authorisation"
+        },
+        "titleFormatted": {
+          "en": "Set ignation authorisation to [[ignationAllowed]]",
+          "fr": "Définir l'autorisation d'allumage sur [[ignationAllowed]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
+            "type": "dropdown",
+            "name": "ignationAllowed",
+            "values": [
+              {
+                "id": "1",
+                "title": {
+                  "fr": "Allumage autorisé",
+                  "en": "Ignation allowed"
+                }
+              },
+              {
+                "id": "0",
+                "title": {
+                  "fr": "Allumage interdit",
+                  "en": "Ignation forbbiden"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "setAutoMode",
+        "title": {
+          "fr": "Gestion du mode auto",
+          "en": "Automatic mode management"
+        },
+        "titleFormatted": {
+          "en": "Set automatic mode management to [[selectedMode]]",
+          "fr": "Définir le mode automatique sur [[selectedMode]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
+            "type": "dropdown",
+            "name": "selectedMode",
+            "values": [
+              {
+                "id": "1",
+                "title": {
+                  "fr": "Mode Auto",
+                  "en": "Auto Mode"
+                }
+              },
+              {
+                "id": "0",
+                "title": {
+                  "fr": "Mode Manuel",
+                  "en": "Manual Mode"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "setPelletsReload",
+        "title": {
+          "fr": "La réserve de granulé est rechargée",
+          "en": "The Pellets have been refilled"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ]
+      },
+      {
+        "id": "setAllowSilenceMode",
+        "title": {
+          "fr": "Définir l'autorisation du préréglage silence",
+          "en": "Set preset silence mode authorzation"
+        },
+        "titleFormatted": {
+          "fr": "Autoriser le préréglage silence [[enabled]]",
+          "en": "Allow silence mode preset [[enabled]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
+            "type": "checkbox",
+            "name": "enabled",
+            "title": {
+              "fr": "Autoriser",
+              "en": "Allow"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "drivers": [
     {
-      "id" : "cbox",
-      "name" : {
-        "fr" : "CBox Palazzetti",
-        "en" : "Palazzetti CBOX"
+      "name": {
+        "fr": "CBox Palazzetti",
+        "en": "Palazzetti CBOX"
       },
-      "class" : "heater",
-      "capabilities" : [
+      "class": "heater",
+      "capabilities": [
         "onoff",
         "target_temperature",
         "measure_temperature",
@@ -273,616 +634,842 @@
         "stove_state",
         "stove_regulation",
         "external_temperature",
-        "internal_temperature"
+        "internal_temperature",
+        "stove_connection",
+        "pellets_burned",
+        "pellets_burned_since_load",
+        "auto_mode",
+        "stove_ignation",
+        "measure_power",
+        "meter_power"
       ],
-      "pair" : [
+      "pair": [
         {
-          "id" : "list_devices",
-          "template" : "list_devices",
-          "navigation" : {
-            "next" : "add_devices"
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
           },
-          "options" : {
-            "singular" : true
+          "options": {
+            "singular": true
           }
         },
         {
-          "id" : "add_devices",
-          "template" : "add_devices"
+          "id": "add_devices",
+          "template": "add_devices"
         }
       ],
-      "settings" : [
+      "settings": [
         {
-          "type" : "group",
-          "label" : {
-            "en" : "General Settings",
-            "fr" : "Paramètres Généraux"
+          "type": "group",
+          "label": {
+            "en": "General Settings",
+            "fr": "Paramètres Généraux"
           },
-          "children" : [
+          "children": [
             {
-              "id" : "ip",
-              "type" : "text",
-              "label" : {
-                "en" : "IP Adress",
-                "fr" : "Adresse IP"
+              "id": "ip",
+              "type": "text",
+              "label": {
+                "en": "IP Adress",
+                "fr": "Adresse IP"
               }
             },
             {
-              "id" : "externalTerm",
-              "hint" : {
-                "fr" : "Indique si le SmartStart et le SmartPause doivent utiliser la sonde de température interne au poêle ou une sonde de température déportée dont la mise à jour est réalisée par un flow homey",
-                "en" : "Indicates whether the SmartStart and SmartPause must use the internal temperature sensor of the stove or a remote temperature sensor updated by a flow"
+              "id": "externalTerm",
+              "hint": {
+                "fr": "Indique si le SmartStart et le SmartPause doivent utiliser la sonde de température interne au poêle ou une sonde de température déportée dont la mise à jour est réalisée par un flow homey",
+                "en": "Indicates whether the SmartStart and SmartPause must use the internal temperature sensor of the stove or a remote temperature sensor updated by a flow"
               },
-              "type" : "checkbox",
-              "value" : true,
-              "label" : {
-                "en" : "Use of an deported thermometer",
-                "fr" : "Utilisation thermomètre déporté"
+              "type": "checkbox",
+              "value": true,
+              "label": {
+                "en": "Use of an deported thermometer",
+                "fr": "Utilisation thermomètre déporté"
               }
             }
           ]
         },
         {
-          "type" : "group",
-          "label" : {
-            "en" : "SmartStart parameters",
-            "fr" : "Paramètres du Smart Start"
+          "type": "group",
+          "label": {
+            "en": "SmartStart parameters",
+            "fr": "Paramètres du Smart Start"
           },
-          "children" : [
+          "children": [
             {
-              "id" : "smartStart",
-              "hint" : {
-                "fr" : "Le démarrage intelligent n'active pas le poêl si la température de la pièce est supérieur ou égale à la température de consigne",
-                "en" : "Smart start does not activate the stove if the room temperature is greater than or equal to the target temperature"
+              "id": "smartStart",
+              "hint": {
+                "fr": "Le démarrage intelligent n'active pas le poêl si la température de la pièce est supérieur ou égale à la température de consigne",
+                "en": "Smart start does not activate the stove if the room temperature is greater than or equal to the target temperature"
               },
-              "type" : "checkbox",
-              "value" : true,
-              "label" : {
-                "en" : "Smart Start",
-                "fr" : "Démarrage intelligent"
+              "type": "checkbox",
+              "value": true,
+              "label": {
+                "en": "Smart Start",
+                "fr": "Démarrage intelligent"
               }
             }
           ]
         },
         {
-          "type" : "group",
-          "label" : {
-            "en" : "SmartPause parameters",
-            "fr" : "Paramètres du Smart Pause"
+          "type": "group",
+          "label": {
+            "en": "SmartPause parameters",
+            "fr": "Paramètres du Smart Pause"
           },
-          "children" : [
+          "children": [
             {
-              "id" : "smartPause",
-              "hint" : {
-                "fr" : "La pause intelligente met automatiquement le poêle en pause si la température indiquée est attente pendant le laps de temps spécifié.",
-                "en" : "Smart Pause automatically pauses the stove if the specified temperature is held for the specified amount of time."
+              "id": "smartPause",
+              "hint": {
+                "fr": "La pause intelligente met automatiquement le poêle en pause si la température indiquée est attente pendant le laps de temps spécifié.",
+                "en": "Smart Pause automatically pauses the stove if the specified temperature is held for the specified amount of time."
               },
-              "type" : "checkbox",
-              "value" : true,
-              "label" : {
-                "en" : "Smart Pause",
-                "fr" : "Smart Pause"
+              "type": "checkbox",
+              "value": true,
+              "label": {
+                "en": "Smart Pause",
+                "fr": "Smart Pause"
               }
             },
             {
-              "id" : "pauseTemp",
-              "hint" : {
-                "fr" : "Indique la température qui déclenche la mise en pause de la régulation",
-                "en" : "Indicates the temperature that triggers the pause of the regulation"
+              "id": "pauseTemp",
+              "hint": {
+                "fr": "Indique la différence de température qui déclenche la mise en pause de la régulation",
+                "en": "Indicates the temperature delta that triggers the pause of the regulation"
               },
-              "type" : "number",
-              "value" : 25,
-              "label" : {
-                "en" : "Température",
-                "fr" : "Temperature"
+              "type": "number",
+              "value": 3,
+              "min": 0.5,
+              "label": {
+                "en": "Temp. Delta for pause",
+                "fr": "Delta de Temp. pour Pause"
               },
-              "units" : {
-                "fr" : "°",
-                "en" : "°"
+              "units": {
+                "fr": "°",
+                "en": "°"
               }
             },
             {
-              "id" : "tempDuration",
-              "hint" : {
-                "fr" : "Indique le durée miminum de la température qui déclenche la mise en pause de la régulation",
-                "en" : "Indicates the minimum duration of the temperature which triggers the pausing of the regulation"
+              "id": "restartPauseTemp",
+              "hint": {
+                "fr": "Indique la différence de température qui déclenche la remise en chauffe de la régulation",
+                "en": "Indicates the temperature delta that triggers the burning regulation mode"
               },
-              "type" : "number",
-              "value" : 10,
-              "label" : {
-                "en" : "Duration",
-                "fr" : "Durée"
+              "type": "number",
+              "value": 0,
+              "max": 0.5,
+              "min": -3,
+              "label": {
+                "en": "Temp. Delta for burning",
+                "fr": "Delta de Temp. pour reprise"
               },
-              "units" : {
-                "fr" : "minutes",
-                "en" : "minutes"
+              "units": {
+                "fr": "°",
+                "en": "°"
               }
             }
           ]
         },
         {
-          "type" : "group",
-          "label" : {
-            "en" : "Power modulation parameters",
-            "fr" : "Paramètres de modulation de puissance"
+          "type": "group",
+          "label": {
+            "fr": "Paramètres de la pré alarme granulés",
+            "en": "Pellet pre-alarm parameters"
           },
-          "children" : [
+          "children": [
             {
-              "type" : "group",
-              "label" : {
-                "fr" : "Préréglage 0",
-                "en" : "Preset 0"
+              "id": "withPreAlarm",
+              "hint": {
+                "fr": "Indique si la prés-alarme doit être levé si les conditions le permetttent",
+                "en": "Indicates whether the pre-alarm should be raised if conditions permit"
               },
-              "children" : [
+              "type": "checkbox",
+              "value": true,
+              "label": {
+                "fr": "Pre Alarme granulés",
+                "en": "Post pellets alarm"
+              }
+            },
+            {
+              "id": "deltaPelletsBurned",
+              "hint": {
+                "fr": "Poids en kilos de granulés consommés depuis le dernier chargement qui déclenche la prés alarme",
+                "en": "Weight in kilos of pellets consumed since the last load that triggered the pre-alarm"
+              },
+              "nim": 1,
+              "max": 30,
+              "value": 10,
+              "type": "number",
+              "label": {
+                "fr": "Kilos brulés depuis la dernière recharge",
+                "en": "Kilos burned since the last recharge"
+              },
+              "units": {
+                "fr": "Kg",
+                "en": "Kg"
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Power modulation parameters",
+            "fr": "Paramètres de modulation de puissance"
+          },
+          "children": [
+            {
+              "type": "group",
+              "label": {
+                "fr": "Préréglage 0",
+                "en": "Preset 0"
+              },
+              "children": [
                 {
-                  "id" : "preset0BurningPower",
-                  "min" : 1,
-                  "max" : 5,
-                  "value" : 3,
-                  "type" : "number",
-                  "hint" : {
-                    "fr" : "Puissance du poêle pour le préréglage 0",
-                    "en" : "Stove power for preset 0"
+                  "id": "preset0BurningPower",
+                  "min": 1,
+                  "max": 5,
+                  "value": 3,
+                  "type": "number",
+                  "hint": {
+                    "fr": "Puissance du poêle pour le préréglage 0 appliqué lorsque la température est inférieur à la température de consigne",
+                    "en": "Stove power for preset 0 applied when the temperature is lower than the target temperature"
                   },
-                  "label" : {
-                    "fr" : "Puissance de chauffe",
-                    "en" : "Power"
+                  "label": {
+                    "fr": "Puissance de chauffe",
+                    "en": "Power"
                   }
                 },
                 {
-                  "id" : "preset0FanSpeed",
-                  "min" : 0,
-                  "max" : 5,
-                  "value" : 2,
-                  "type" : "number",
-                  "hint" : {
-                    "fr" : "Vitesse de ventilation du poêle pour le préréglage 0",
-                    "en" : "Stove fan speed for preset 0"
+                  "id": "preset0FanSpeed",
+                  "min": 0,
+                  "max": 7,
+                  "value": 2,
+                  "type": "number",
+                  "hint": {
+                    "fr": "Vitesse de ventilation du poêle pour le préréglage 0 appliqué lorsque la température est inférieur à la température de consigne\n0= Arrêt\n6= Max\n7= Auto",
+                    "en": "Stove fan speed for preset 0 applied when the temperature is lower than the target temperature\n0= Stopped\n6= Max\n7= Auto"
                   },
-                  "label" : {
-                    "fr" : "Vitesse de ventilation",
-                    "en" : "Fan speed"
+                  "label": {
+                    "fr": "Vitesse de ventilation",
+                    "en": "Fan speed"
                   }
                 }
               ]
             },
             {
-              "type" : "group",
-              "label" : {
-                "fr" : "Préréglage 1",
-                "en" : "Preset 1"
+              "type": "group",
+              "label": {
+                "fr": "Préréglage 1",
+                "en": "Preset 1"
               },
-              "children" : [
+              "children": [
                 {
-                  "id" : "preset1BurningPower",
-                  "min" : 1,
-                  "max" : 5,
-                  "value" : 3,
-                  "type" : "number",
-                  "hint" : {
-                    "fr" : "Puissance du poêle pour le préréglage 1",
-                    "en" : "Stove power for preset 1"
+                  "id": "deltaN1",
+                  "hint": {
+                    "fr": "Indique la différence de température avec la température de consigne qui déclenche l’application de ce pré-réglage",
+                    "en": "Indicates the temperature difference with the tagret temperature that triggers the application of this pre-setting"
                   },
-                  "label" : {
-                    "fr" : "Puissance de chauffe",
-                    "en" : "Power"
+                  "type": "number",
+                  "value": 1,
+                  "min": -1,
+                  "label": {
+                    "en": "Temp. Delta",
+                    "fr": "Delta de Température"
+                  },
+                  "units": {
+                    "fr": "°",
+                    "en": "°"
                   }
                 },
                 {
-                  "id" : "preset1FanSpeed",
-                  "min" : 0,
-                  "max" : 5,
-                  "value" : 2,
-                  "type" : "number",
-                  "hint" : {
-                    "fr" : "Vitesse de ventilation du poêle pour le préréglage 1",
-                    "en" : "Stove fan speed for preset 1"
+                  "id": "preset1BurningPower",
+                  "min": 1,
+                  "max": 5,
+                  "value": 3,
+                  "type": "number",
+                  "hint": {
+                    "fr": "Puissance du poêle pour le préréglage 1",
+                    "en": "Stove power for preset 1"
                   },
-                  "label" : {
-                    "fr" : "Vitesse de ventilation",
-                    "en" : "Fan speed"
+                  "label": {
+                    "fr": "Puissance de chauffe",
+                    "en": "Power"
+                  }
+                },
+                {
+                  "id": "preset1FanSpeed",
+                  "min": 0,
+                  "max": 7,
+                  "value": 2,
+                  "type": "number",
+                  "hint": {
+                    "fr": "Vitesse de ventilation du poêle pour le préréglage 1\n0= Arrêt\n6= Max\n7= Auto",
+                    "en": "Stove fan speed for preset 1\n0= Stopped\n6= Max\n7= Auto"
+                  },
+                  "label": {
+                    "fr": "Vitesse de ventilation",
+                    "en": "Fan speed"
                   }
                 }
               ]
             },
             {
-              "type" : "group",
-              "label" : {
-                "fr" : "Préréglage 2",
-                "en" : "Preset 2"
+              "type": "group",
+              "label": {
+                "fr": "Préréglage 2",
+                "en": "Preset 2"
               },
-              "children" : [
+              "children": [
                 {
-                  "id" : "preset2BurningPower",
-                  "min" : 1,
-                  "max" : 5,
-                  "value" : 3,
-                  "type" : "number",
-                  "hint" : {
-                    "fr" : "Puissance du poêle pour le préréglage 2",
-                    "en" : "Stove power for preset 2"
+                  "id": "deltaN2",
+                  "hint": {
+                    "fr": "Indique la différence de température avec la température de consigne qui déclenche l’application de ce pré-réglage",
+                    "en": "Indicates the temperature difference that triggers the application of this pre-setting"
                   },
-                  "label" : {
-                    "fr" : "Puissance de chauffe",
-                    "en" : "Power"
+                  "type": "number",
+                  "value": 2,
+                  "min": -0.5,
+                  "label": {
+                    "en": "Temp. Delta",
+                    "fr": "Delta de Température"
+                  },
+                  "units": {
+                    "fr": "°",
+                    "en": "°"
                   }
                 },
                 {
-                  "id" : "preset2FanSpeed",
-                  "min" : 0,
-                  "max" : 5,
-                  "value" : 2,
-                  "type" : "number",
-                  "hint" : {
-                    "fr" : "Vitesse de ventilation du poêle pour le préréglage 2",
-                    "en" : "Stove fan speed for preset 2"
+                  "id": "preset2BurningPower",
+                  "min": 1,
+                  "max": 5,
+                  "value": 3,
+                  "type": "number",
+                  "hint": {
+                    "fr": "Puissance du poêle pour le préréglage 2",
+                    "en": "Stove power for preset 2"
                   },
-                  "label" : {
-                    "fr" : "Vitesse de ventilation",
-                    "en" : "Fan speed"
+                  "label": {
+                    "fr": "Puissance de chauffe",
+                    "en": "Power"
+                  }
+                },
+                {
+                  "id": "preset2FanSpeed",
+                  "min": 0,
+                  "max": 7,
+                  "value": 2,
+                  "type": "number",
+                  "hint": {
+                    "fr": "Vitesse de ventilation du poêle pour le préréglage 2\n0= Arrêt\n6= Max\n7= Auto",
+                    "en": "Stove fan speed for preset 2\n0= Stopped\n6= Max\n7= Auto"
+                  },
+                  "label": {
+                    "fr": "Vitesse de ventilation",
+                    "en": "Fan speed"
                   }
                 }
               ]
+            },
+            {
+              "type": "group",
+              "label": {
+                "fr": "Préréglage Silence",
+                "en": "Silence Preset"
+              },
+              "children": [
+                {
+                  "id": "deltaSilenceEnable",
+                  "hint": {
+                    "fr": "Active ou Désactive ce préréglage",
+                    "en": "Enable or Disable this preset"
+                  },
+                  "type": "checkbox",
+                  "label": {
+                    "en": "Enable",
+                    "fr": "Activé"
+                  },
+                  "value": true
+                },
+                {
+                  "id": "deltaSilence",
+                  "hint": {
+                    "fr": "Indique la différence de température avec la température de consigne qui déclenche l’application du mode silence",
+                    "en": "Indicates the temperature difference that triggers the application of this silence setting"
+                  },
+                  "type": "number",
+                  "value": 2,
+                  "min": 0,
+                  "label": {
+                    "en": "Temp. Delta",
+                    "fr": "Delta de Température"
+                  },
+                  "units": {
+                    "fr": "°",
+                    "en": "°"
+                  }
+                },
+                {
+                  "id": "presetSilenceBurningPower",
+                  "min": 1,
+                  "max": 5,
+                  "value": 1,
+                  "type": "number",
+                  "hint": {
+                    "fr": "Puissance du poêle pour le préréglage silence",
+                    "en": "Stove power for preset silence"
+                  },
+                  "label": {
+                    "fr": "Puissance de chauffe",
+                    "en": "Power"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Frost Protection parameters",
+            "fr": "Paramètres Hors Gel"
+          },
+          "children": [
+            {
+              "id": "hgMinTemp",
+              "hint": {
+                "fr": "Indique la température qui déclenchera l’allumage du poêle en mode Hors Gel",
+                "en": "Indicates the temperature that will trigger the ignition of the stove in Frost Protection mod"
+              },
+              "type": "number",
+              "value": 14,
+              "min": 5,
+              "label": {
+                "en": "Min temperature",
+                "fr": "Température minimale"
+              },
+              "units": {
+                "fr": "°",
+                "en": "°"
+              }
+            },
+            {
+              "id": "hgMaxTemp",
+              "hint": {
+                "fr": "Indique la température qui déclenchera la pause du poêle en mode Hors Gel",
+                "en": "Indicates the temperature that will trigger the pause of the stove in Frost Protection mode"
+              },
+              "type": "number",
+              "value": 16,
+              "max": 18,
+              "label": {
+                "en": "Max temperature",
+                "fr": "Température maximale"
+              },
+              "units": {
+                "fr": "°",
+                "en": "°"
+              }
+            },
+            {
+              "id": "presetHGBurningPower",
+              "min": 1,
+              "max": 5,
+              "value": 4,
+              "type": "number",
+              "hint": {
+                "fr": "Puissance du poêle pour le mode Hors GEL",
+                "en": "Stove power for frost protection mode"
+              },
+              "label": {
+                "fr": "Puissance de chauffe",
+                "en": "Power"
+              }
+            },
+            {
+              "id": "presetHGFanSpeed",
+              "min": 0,
+              "max": 7,
+              "value": 2,
+              "type": "number",
+              "hint": {
+                "fr": "Vitesse de ventilation du poêle pour le mode HG",
+                "en": "Stove fan speed for preset 0 applied when the temperature is lower than the target temperature\n0= Stopped\n6= Max\n7= Auto"
+              },
+              "label": {
+                "fr": "Vitesse de ventilation",
+                "en": "Fan speed"
+              }
             }
           ]
         }
       ],
-      "capabilitiesOptions" : {
-        "target_temperature" : {
-          "min" : 18,
-          "max" : 30,
-          "step" : 1
+      "capabilitiesOptions": {
+        "target_temperature": {
+          "min": 15,
+          "max": 30,
+          "step": 0.5
         },
-        "onoff" : {
-          "title" : {
-            "en" : "Stove management",
-            "fr" : "Gestion du poêle"
+        "onoff": {
+          "title": {
+            "en": "Stove management",
+            "fr": "Gestion du poêle"
           },
-          "uiQuickAction" : true
+          "uiQuickAction": true
+        },
+        "measure_power": {
+          "approximated": true,
+          "uiComponent": null
+        },
+        "meter_power": {
+          "uiComponent": null
         }
-      }
+      },
+      "images": {
+        "large": "/drivers/cbox/images/large.jpg",
+        "small": "/drivers/cbox/images/small.jpg"
+      },
+      "id": "cbox"
     }
   ],
-  "flow" : {
-    "actions" : [
-      {
-        "id" : "setTargetPower",
-        "title" : {
-          "en" : "Set the Power",
-          "fr" : "Définir la puissance de chauffe"
-        },
-        "args" : [
-          {
-            "type" : "device",
-            "name" : "device",
-            "filter" : "driver_id=cbox"
-          },
-          {
-            "name" : "target_power",
-            "type" : "dropdown",
-            "values" : [
-              {
-                "id" : "1",
-                "title" : {
-                  "fr" : "1",
-                  "en" : "1"
-                }
-              },
-              {
-                "id" : "2",
-                "title" : {
-                  "fr" : "2",
-                  "en" : "1"
-                }
-              },
-              {
-                "id" : "3",
-                "title" : {
-                  "fr" : "3",
-                  "en" : "1"
-                }
-              },
-              {
-                "id" : "4",
-                "title" : {
-                  "fr" : "4",
-                  "en" : "1"
-                }
-              },
-              {
-                "id" : "5",
-                "title" : {
-                  "fr" : "5",
-                  "en" : "5"
-                }
-              }
-            ]
-          }
-        ]
+  "capabilities": {
+    "alarm_pellets": {
+      "type": "boolean",
+      "getable": true,
+      "setable": true,
+      "title": {
+        "fr": "Alarme Pellets",
+        "en": "Pellets Alarm"
       },
-      {
-        "id" : "setTargetFanSpeed",
-        "title" : {
-          "en" : "Set the fan speed",
-          "fr" : "Définir la vitesse de ventillation"
-        },
-        "args" : [
-          {
-            "type" : "device",
-            "name" : "device",
-            "filter" : "driver_id=cbox"
-          },
-          {
-            "name" : "target_fan_speed",
-            "type" : "dropdown",
-            "values" : [
-              {
-                "id" : "0",
-                "title" : {
-                  "fr" : "Arrêt",
-                  "en" : "OFF"
-                }
-              },
-              {
-                "id" : "1",
-                "title" : {
-                  "fr" : "1",
-                  "en" : "1"
-                }
-              },
-              {
-                "id" : "2",
-                "title" : {
-                  "fr" : "2",
-                  "en" : "2"
-                }
-              },
-              {
-                "id" : "3",
-                "title" : {
-                  "fr" : "3",
-                  "en" : "2"
-                }
-              },
-              {
-                "id" : "4",
-                "title" : {
-                  "fr" : "4",
-                  "en" : "4"
-                }
-              },
-              {
-                "id" : "5",
-                "title" : {
-                  "fr" : "5",
-                  "en" : "5"
-                }
-              }
-            ]
-          }
-        ]
+      "uiComponent": "sensor",
+      "icon": "/assets/pellets_alarm.svg"
+    },
+    "auto_mode": {
+      "type": "boolean",
+      "getable": true,
+      "setable": true,
+      "title": {
+        "fr": "Mode Auto",
+        "en": "Auto Mode"
       },
-      {
-        "id" : "setPreset",
-        "title" : {
-          "en" : "Set preset",
-          "fr" : "Appliquer un préréglage"
-        },
-        "args" : [
-          {
-            "type" : "device",
-            "name" : "device",
-            "filter" : "driver_id=cbox"
-          },
-          {
-            "name" : "preset",
-            "type" : "dropdown",
-            "values" : [
-              {
-                "id" : "0",
-                "title" : {
-                  "fr" : "Préréglage 0",
-                  "en" : "Preset 0"
-                }
-              },
-              {
-                "id" : "1",
-                "title" : {
-                  "fr" : "Préréglage 1",
-                  "en" : "Preset 1"
-                }
-              },
-              {
-                "id" : "2",
-                "title" : {
-                  "fr" : "Préréglage 2",
-                  "en" : "Preset 2"
-                }
-              }
-            ]
-          }
-        ]
+      "uiComponent": "button",
+      "icon": "/assets/auto_mode.svg"
+    },
+    "external_temperature": {
+      "type": "number",
+      "setable": true,
+      "getable": true,
+      "title": {
+        "fr": "Thermomètre déporté",
+        "en": "Deported thermometer"
       },
-      {
-        "id" : "setRegulationInState",
-        "title" : {
-          "fr" : "Changer le mode de régulation",
-          "en" : "Change regulation mode for"
-        },
-        "args" : [
-          {
-            "type" : "device",
-            "name" : "device",
-            "filter" : "driver_id=cbox"
-          },
-          {
-            "type" : "dropdown",
-            "name" : "state",
-            "values" : [
-              {
-                "id" : "SILENTLY",
-                "title" : {
-                  "fr" : "SILENCE",
-                  "en" : "SILENTLY"
-                }
-              },
-              {
-                "id" : "BURNING",
-                "title" : {
-                  "fr" : "EN CHAUFFE",
-                  "en" : "BURNING"
-                }
-              },
-              {
-                "id" : "PAUSED",
-                "title" : {
-                  "fr" : "EN PAUSE",
-                  "en" : "PAUSED"
-                }
-              }
-            ]
-          }
-        ]
+      "uiComponent": "sensor",
+      "icon": "/assets/thermometer.svg"
+    },
+    "internal_temperature": {
+      "type": "number",
+      "setable": true,
+      "getable": true,
+      "title": {
+        "fr": "Thermomètre interne",
+        "en": "Internal thermometer"
       },
-      {
-        "id" : "setExternalTemp",
-        "title" : {
-          "fr" : "Enregistrer température déportée",
-          "en" : "Record deported temperature"
-        },
-        "args" : [
-          {
-            "type" : "device",
-            "name" : "device",
-            "filter" : "driver_id=cbox"
-          },
-          {
-            "type" : "number",
-            "name" : "temperature"
-          }
-        ]
+      "uiComponent": "sensor",
+      "icon": "/assets/thermometer.svg"
+    },
+    "pellets_burned": {
+      "type": "number",
+      "setable": true,
+      "getable": true,
+      "title": {
+        "fr": "Pellets brulés",
+        "en": "Burned Pellets"
       },
-      {
-        "id" : "setSmartPause",
-        "title" : {
-          "fr" : "Gestion du SmartPause",
-          "en" : "SmartPause management"
-        },
-        "args" : [
-          {
-            "type" : "device",
-            "name" : "device",
-            "filter" : "driver_id=cbox"
-          },
-          {
-            "type" : "dropdown",
-            "name" : "smartPause",
-            "values" : [
-              {
-                "id" : "1",
-                "title" : {
-                  "fr" : "Activer SmartPause",
-                  "en" : "Enable SmartPause"
-                }
-              },
-              {
-                "id" : "2",
-                "title" : {
-                  "fr" : "Désactiver SmartPause",
-                  "en" : "Disable SmartPause"
-                }
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "triggers" : [
-      {
-        "id" : "pellets_attention",
-        "title" : {
-          "en" : "No more pellets",
-          "fr" : "Plus de granulés"
-        },
-        "args" : [
-          {
-            "type" : "device",
-            "name" : "device",
-            "filter" : "driver_id=cbox"
-          }
-        ]
-      }
-    ],
-    "conditions" : [
-      {
-        "id" : "isSmartStartEnabled",
-        "title" : {
-          "fr" : "Le démarrage intelligent !{{est|n'est pas}} activé",
-          "en" : "Smartstart !{{is|is not}} enabled"
-        },
-        "args" : [
-          {
-            "type" : "device",
-            "name" : "device",
-            "filter" : "driver_id=cbox"
-          }
-        ]
+      "unit": {
+        "en": "Kg",
+        "fr": "Kg"
       },
-      {
-        "id" : "isRegulationInState",
-        "title" : {
-          "fr" : "La régulation !{{est|n'est pas}} égale à",
-          "en" : "Regulation !{{is|is not}} equals to"
-        },
-        "args" : [
-          {
-            "type" : "device",
-            "name" : "device",
-            "filter" : "driver_id=cbox"
-          },
-          {
-            "type" : "dropdown",
-            "name" : "state",
-            "values" : [
-              {
-                "id" : "SILENTLY",
-                "title" : {
-                  "fr" : "SILENCE",
-                  "en" : "SILENTLY"
-                }
-              },
-              {
-                "id" : "WAITING_TEMP",
-                "title" : {
-                  "fr" : "ATTENTE SMART START",
-                  "en" : "WAITING SMART START"
-                }
-              },
-              {
-                "id" : "BURNING",
-                "title" : {
-                  "fr" : "EN CHAUFFE",
-                  "en" : "BURNING"
-                }
-              },
-              {
-                "id" : "PAUSED",
-                "title" : {
-                  "fr" : "EN PAUSE",
-                  "en" : "PAUSED"
-                }
-              },
-              {
-                "id" : "STOPPED",
-                "title" : {
-                  "fr" : "ARRÊTÉ",
-                  "en" : "STOPPED"
-                }
-              }
-            ]
+      "uiComponent": "sensor",
+      "icon": "/assets/pellets_alarm.svg"
+    },
+    "pellets_burned_since_load": {
+      "type": "number",
+      "setable": true,
+      "getable": true,
+      "title": {
+        "fr": "Granulés consommés depuis recharge",
+        "en": "Pellets burned since last load"
+      },
+      "unit": {
+        "en": "Kg",
+        "fr": "Kg"
+      },
+      "uiComponent": null,
+      "icon": "/assets/pellets_alarm.svg"
+    },
+    "stove_connection": {
+      "type": "boolean",
+      "getable": true,
+      "setable": false,
+      "title": {
+        "fr": "Alarme Connexion",
+        "en": "Alarm Connection"
+      },
+      "titleTrue": {
+        "fr": "Déconnecté",
+        "en": "Offline"
+      },
+      "titleFalse": {
+        "fr": "Connecté",
+        "en": "Online"
+      },
+      "insightsTitleTrue": {
+        "fr": "Déconnecté",
+        "en": "Offline"
+      },
+      "insightsTitleFalse": {
+        "fr": "Connecté",
+        "en": "Online"
+      },
+      "uiComponent": "sensor",
+      "insights": true,
+      "icon": "/assets/connected.svg"
+    },
+    "stove_ignation": {
+      "type": "boolean",
+      "getable": true,
+      "setable": true,
+      "title": {
+        "fr": "Allumage autorisé",
+        "en": "Ignition allowed"
+      },
+      "uiComponent": "button",
+      "icon": "/assets/block_start.svg"
+    },
+    "stove_regulation": {
+      "type": "enum",
+      "getable": true,
+      "setable": true,
+      "title": {
+        "fr": "Régulation",
+        "en": "Regulation"
+      },
+      "uiComponent": "picker",
+      "values": [
+        {
+          "id": "SILENTLY",
+          "title": {
+            "fr": "SILENCE",
+            "en": "SILENTLY"
           }
-        ]
-      }
-    ]
+        },
+        {
+          "id": "WAITING_TEMP",
+          "title": {
+            "fr": "ATTENTE SMART START",
+            "en": "WAITING SMART START"
+          }
+        },
+        {
+          "id": "BURNING",
+          "title": {
+            "fr": "EN CHAUFFE",
+            "en": "BURNING"
+          }
+        },
+        {
+          "id": "PAUSED",
+          "title": {
+            "fr": "EN PAUSE",
+            "en": "PAUSED"
+          }
+        },
+        {
+          "id": "STOPPED",
+          "title": {
+            "fr": "ARRÊTÉ",
+            "en": "STOPPED"
+          }
+        },
+        {
+          "id": "HORS_GEL",
+          "title": {
+            "fr": "HORS GEL",
+            "en": "FROST PROTECTION"
+          }
+        }
+      ]
+    },
+    "stove_state": {
+      "type": "enum",
+      "getable": true,
+      "setable": true,
+      "title": {
+        "fr": "Etat",
+        "en": "State"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/icon.svg",
+      "values": [
+        {
+          "id": "STOPPED",
+          "title": {
+            "fr": "ARRETÉ",
+            "en": "STOPPED"
+          }
+        },
+        {
+          "id": "STARTING",
+          "title": {
+            "fr": "ALLUMAGE",
+            "en": "IGNATION"
+          }
+        },
+        {
+          "id": "STARTED",
+          "title": {
+            "fr": "ALLUMÉ",
+            "en": "BURNING"
+          }
+        },
+        {
+          "id": "STOPPING",
+          "title": {
+            "fr": "EN ARRÊT",
+            "en": "STOPPING"
+          }
+        },
+        {
+          "id": "UNKNOW",
+          "title": {
+            "fr": "INCONNU",
+            "en": "UNKNOW"
+          }
+        },
+        {
+          "id": "FAULTED",
+          "title": {
+            "fr": "EN DÉFAUT",
+            "en": "FAULTED"
+          }
+        }
+      ]
+    },
+    "target_fan_speed": {
+      "type": "enum",
+      "setable": true,
+      "getable": true,
+      "title": {
+        "fr": "Vitesse de ventillation",
+        "en": "Fan Speed"
+      },
+      "uiComponent": "picker",
+      "values": [
+        {
+          "id": "0",
+          "title": {
+            "fr": "Arrêt",
+            "en": "OFF"
+          }
+        },
+        {
+          "id": "1",
+          "title": {
+            "fr": "1",
+            "en": "1"
+          }
+        },
+        {
+          "id": "2",
+          "title": {
+            "fr": "2",
+            "en": "2"
+          }
+        },
+        {
+          "id": "3",
+          "title": {
+            "fr": "3",
+            "en": "2"
+          }
+        },
+        {
+          "id": "4",
+          "title": {
+            "fr": "4",
+            "en": "4"
+          }
+        },
+        {
+          "id": "5",
+          "title": {
+            "fr": "5",
+            "en": "5"
+          }
+        },
+        {
+          "id": "6",
+          "title": {
+            "fr": "Max",
+            "en": "Hight"
+          }
+        },
+        {
+          "id": "7",
+          "title": {
+            "fr": "Auto",
+            "en": "Auto"
+          }
+        }
+      ]
+    },
+    "target_power": {
+      "type": "enum",
+      "getable": true,
+      "setable": true,
+      "title": {
+        "fr": "Puissance de Chauffe",
+        "en": "Fire Power"
+      },
+      "uiComponent": "picker",
+      "values": [
+        {
+          "id": "1",
+          "title": {
+            "fr": "1",
+            "en": "1"
+          }
+        },
+        {
+          "id": "2",
+          "title": {
+            "fr": "2",
+            "en": "1"
+          }
+        },
+        {
+          "id": "3",
+          "title": {
+            "fr": "3",
+            "en": "1"
+          }
+        },
+        {
+          "id": "4",
+          "title": {
+            "fr": "4",
+            "en": "1"
+          }
+        },
+        {
+          "id": "5",
+          "title": {
+            "fr": "5",
+            "en": "5"
+          }
+        }
+      ]
+    }
   }
 }

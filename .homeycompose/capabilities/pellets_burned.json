@@ -1,0 +1,15 @@
+{
+  "type": "number",
+  "setable": true,
+  "getable": true,
+  "title": {
+    "fr": "Pellets brulés",
+    "en": "Burned Pellets"
+  },
+  "unit":{
+    "en":"Kg",
+    "fr":"Kg"
+  },
+  "uiComponent": "sensor",
+  "icon": "/assets/pellets_alarm.svg"
+}

@@ -1,0 +1,11 @@
+{
+  "type": "number",
+  "setable": true,
+  "getable": true,
+  "title": {
+    "fr": "Thermomètre déporté",
+    "en": "Deported thermometer"
+  },
+  "uiComponent": "sensor",
+  "icon": "/assets/thermometer.svg"
+}

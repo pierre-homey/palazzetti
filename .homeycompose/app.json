@@ -1,0 +1,24 @@
+{
+  "id": "com.palazzetti",
+  "version": "1.5.0",
+  "sdk": 3,
+  "compatibility": ">=5.0.0",
+  "brandColor": "#75080a",
+  "name": {
+    "en": "Palazzetti CBOX",
+    "fr": "Palazzetti CBOX"
+  },
+  "description": {
+    "en": "Always have a cosy, warm home, whenever you want.",
+    "fr": "Ayez toujours une maison confortable et chaleureuse, quand vous le souhaitez."
+  },
+  "category": "climate",
+  "author": {
+    "email": "pierre-domotique@verron.fr",
+    "name": "Pierre Verron"
+  },
+  "images": {
+    "large": "/assets/images/large.jpg",
+    "small": "/assets/images/small.jpg"
+  }
+}

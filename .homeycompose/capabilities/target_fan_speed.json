@@ -1,0 +1,68 @@
+{
+  "type": "enum",
+  "setable": true,
+  "getable": true,
+  "title": {
+    "fr": "Vitesse de ventillation",
+    "en": "Fan Speed"
+  },
+  "uiComponent": "picker",
+  "values": [
+    {
+      "id": "0",
+      "title": {
+        "fr": "Arrêt",
+        "en": "OFF"
+      }
+    },
+    {
+      "id": "1",
+      "title": {
+        "fr": "1",
+        "en": "1"
+      }
+    },
+    {
+      "id": "2",
+      "title": {
+        "fr": "2",
+        "en": "2"
+      }
+    },
+    {
+      "id": "3",
+      "title": {
+        "fr": "3",
+        "en": "2"
+      }
+    },
+    {
+      "id": "4",
+      "title": {
+        "fr": "4",
+        "en": "4"
+      }
+    },
+    {
+      "id": "5",
+      "title": {
+        "fr": "5",
+        "en": "5"
+      }
+    },
+    {
+      "id": "6",
+      "title": {
+        "fr": "Max",
+        "en": "Hight"
+      }
+    },
+    {
+      "id": "7",
+      "title": {
+        "fr": "Auto",
+        "en": "Auto"
+      }
+    }
+  ]
+}

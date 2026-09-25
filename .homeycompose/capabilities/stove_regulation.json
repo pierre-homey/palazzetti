@@ -1,0 +1,54 @@
+{
+  "type" : "enum",
+  "getable" : true,
+  "setable" : true,
+  "title" : {
+    "fr" : "Régulation",
+    "en" : "Regulation"
+  },
+  "uiComponent" : "picker",
+  "values" : [
+    {
+      "id" : "SILENTLY",
+      "title" : {
+        "fr" : "SILENCE",
+        "en" : "SILENTLY"
+      }
+    },
+    {
+      "id" : "WAITING_TEMP",
+      "title" : {
+        "fr" : "ATTENTE SMART START",
+        "en" : "WAITING SMART START"
+      }
+    },
+    {
+      "id" : "BURNING",
+      "title" : {
+        "fr" : "EN CHAUFFE",
+        "en" : "BURNING"
+      }
+    },
+    {
+      "id" : "PAUSED",
+      "title" : {
+        "fr" : "EN PAUSE",
+        "en" : "PAUSED"
+      }
+    },
+    {
+      "id" : "STOPPED",
+      "title" : {
+        "fr" : "ARRÊTÉ",
+        "en" : "STOPPED"
+      }
+    },
+    {
+      "id" : "HORS_GEL",
+      "title" : {
+        "fr" : "HORS GEL",
+        "en" : "FROST PROTECTION"
+      }
+    }
+  ]
+}

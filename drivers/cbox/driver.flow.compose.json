@@ -1,16 +1,481 @@
 {
-  "actions" : [
+  "triggers": [
     {
-      "$extends" : "setTargetFanSpeed"
+      "id": "pellets_attention",
+      "title": {
+        "en": "The pellet container is empty",
+        "fr": "La réserve de granulé est vide"
+      },
+      "args": []
+    },
+    {
+      "id": "pellets_attention_off",
+      "title": {
+        "en": "The pellet container is refilled",
+        "fr": "La réserve de granulé est rechargée"
+      },
+      "args": []
+    },
+    {
+      "id": "pre_pellets_attention",
+      "title": {
+        "en": "The pellet container is almost empty",
+        "fr": "La réserve de granulé est bientôt vide"
+      },
+      "args": []
+    },
+    {
+      "id": "on_state_change",
+      "title": {
+        "en": "State has changed",
+        "fr": "L'état à changé"
+      },
+      "tokens": [
+        {
+          "name": "state",
+          "type": "string",
+          "title": { "fr": "Etat", "en":"State" },
+          "example": "STOPPED"
+        }
+      ]
     }
   ],
-  "triggers" : [
+  "conditions": [
     {
-      "id" : "pellets_attention",
-      "title" : {
-        "en" : "No more pellets",
-        "fr" : "Plus de granulés"
+      "id": "isSmartStartEnabled",
+      "title": {
+        "fr": "Le démarrage intelligent !{{est|n'est pas}} activé",
+        "en": "Smartstart !{{is|is not}} enabled"
+      },
+      "args": []
+    },
+    {
+      "id": "isRegulationInState",
+      "title": {
+        "fr": "La régulation !{{est|n'est pas}} égale à",
+        "en": "Regulation !{{is|is not}} equals to"
+      },
+      "titleFormatted": {
+        "en": "Regulation is equals to [[state]]",
+        "fr": "La régulation est à l'état [[state]]"
+      },
+      "args": [
+        {
+          "type": "dropdown",
+          "name": "state",
+          "values": [
+            {
+              "id": "SILENTLY",
+              "title": {
+                "fr": "SILENCE",
+                "en": "SILENTLY"
+              }
+            },
+            {
+              "id": "WAITING_TEMP",
+              "title": {
+                "fr": "ATTENTE SMART START",
+                "en": "WAITING SMART START"
+              }
+            },
+            {
+              "id": "BURNING",
+              "title": {
+                "fr": "EN CHAUFFE",
+                "en": "BURNING"
+              }
+            },
+            {
+              "id": "PAUSED",
+              "title": {
+                "fr": "EN PAUSE",
+                "en": "PAUSED"
+              }
+            },
+            {
+              "id": "STOPPED",
+              "title": {
+                "fr": "ARRÊTÉ",
+                "en": "STOPPED"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "isSmartPauseEnabled",
+      "title": {
+        "fr": "La pause intelligente !{{est|n'est pas}} activée",
+        "en": "Smart pause !{{is|is not}} enabled"
+      },
+      "args": []
+    },
+    {
+      "id": "isIgnationAllowed",
+      "title": {
+        "fr": "L'allumage !{{est|n'est pas}} autorisé",
+        "en": "Ignation !{{is|is not}} allowed"
+      },
+      "args": []
+    },
+    {
+      "id": "isAutoModeEnabled",
+      "title": {
+        "fr": "Le mode auto !{{est|n'est pas}} activé",
+        "en": "Auto mode !{{is|is not}} enabled"
+      },
+      "args": []
+    }
+  ],
+  "actions": [
+    {
+      "id": "setTargetPower",
+      "title": {
+        "en": "Set the Power",
+        "fr": "Définir la puissance de chauffe"
+      },
+      "titleFormatted": {
+        "en": "Set the target power to [[target_power]]",
+        "fr": "Définir la puissance de chauffe sur [[target_power]]"
+      },
+      "args": [
+        {
+          "name": "target_power",
+          "type": "dropdown",
+          "values": [
+            {
+              "id": "1",
+              "title": {
+                "fr": "1",
+                "en": "1"
+              }
+            },
+            {
+              "id": "2",
+              "title": {
+                "fr": "2",
+                "en": "1"
+              }
+            },
+            {
+              "id": "3",
+              "title": {
+                "fr": "3",
+                "en": "1"
+              }
+            },
+            {
+              "id": "4",
+              "title": {
+                "fr": "4",
+                "en": "1"
+              }
+            },
+            {
+              "id": "5",
+              "title": {
+                "fr": "5",
+                "en": "5"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "setTargetFanSpeed",
+      "title": {
+        "en": "Set the fan speed",
+        "fr": "Définir la vitesse de ventillation"
+      },
+      "titleFormatted": {
+        "en": "Set the target fan speed to [[target_fan_speed]]",
+        "fr": "Définir la vitesse de ventillation sur [[target_fan_speed]]"
+      },
+      "args": [
+        {
+          "name": "target_fan_speed",
+          "type": "dropdown",
+          "values": [
+            {
+              "id": "0",
+              "title": {
+                "fr": "Arrêt",
+                "en": "OFF"
+              }
+            },
+            {
+              "id": "1",
+              "title": {
+                "fr": "1",
+                "en": "1"
+              }
+            },
+            {
+              "id": "2",
+              "title": {
+                "fr": "2",
+                "en": "2"
+              }
+            },
+            {
+              "id": "3",
+              "title": {
+                "fr": "3",
+                "en": "2"
+              }
+            },
+            {
+              "id": "4",
+              "title": {
+                "fr": "4",
+                "en": "4"
+              }
+            },
+            {
+              "id": "5",
+              "title": {
+                "fr": "5",
+                "en": "5"
+              }
+            },
+            {
+              "id": "6",
+              "title": {
+                "fr": "Max",
+                "en": "Hight"
+              }
+            },
+            {
+              "id": "7",
+              "title": {
+                "fr": "Auto",
+                "en": "Auto"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "setPreset",
+      "title": {
+        "en": "Set preset",
+        "fr": "Appliquer un préréglage"
+      },
+      "titleFormatted": {
+        "en": "Set the target preset to [[preset]]",
+        "fr": "Définir le préréglage sur [[preset]]"
+      },
+      "args": [
+        {
+          "name": "preset",
+          "type": "dropdown",
+          "values": [
+            {
+              "id": "0",
+              "title": {
+                "fr": "Préréglage 0",
+                "en": "Preset 0"
+              }
+            },
+            {
+              "id": "1",
+              "title": {
+                "fr": "Préréglage 1",
+                "en": "Preset 1"
+              }
+            },
+            {
+              "id": "2",
+              "title": {
+                "fr": "Préréglage 2",
+                "en": "Preset 2"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "setRegulationInState",
+      "title": {
+        "fr": "Changer le mode de régulation",
+        "en": "Change regulation mode"
+      },
+      "titleFormatted": {
+        "en": "Set the target regulation mode to [[state]]",
+        "fr": "Définir le mode de régulation sur [[state]]"
+      },
+      "args": [
+        {
+          "type": "dropdown",
+          "name": "state",
+          "values": [
+            {
+              "id": "SILENTLY",
+              "title": {
+                "fr": "SILENCE",
+                "en": "SILENTLY"
+              }
+            },
+            {
+              "id": "BURNING",
+              "title": {
+                "fr": "EN CHAUFFE",
+                "en": "BURNING"
+              }
+            },
+            {
+              "id": "PAUSED",
+              "title": {
+                "fr": "EN PAUSE",
+                "en": "PAUSED"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "setExternalTemp",
+      "title": {
+        "fr": "Enregistrer température déportée",
+        "en": "Record deported temperature"
+      },
+      "titleFormatted": {
+        "en": "Set the deported temperature to [[temperature]]",
+        "fr": "Définir la température déportée sur [[temperature]]"
+      },
+      "args": [
+        {
+          "type": "number",
+          "name": "temperature"
+        }
+      ]
+    },
+    {
+      "id": "setSmartPause",
+      "title": {
+        "fr": "Gestion du SmartPause",
+        "en": "SmartPause management"
+      },
+      "titleFormatted": {
+        "en": "Set the smart pause magement to [[smartPause]]",
+        "fr": "Définir la gestion du SmartPause sur [[smartPause]]"
+      },
+      "args": [
+        {
+          "type": "dropdown",
+          "name": "smartPause",
+          "values": [
+            {
+              "id": "1",
+              "title": {
+                "fr": "Activer SmartPause",
+                "en": "Enable SmartPause"
+              }
+            },
+            {
+              "id": "2",
+              "title": {
+                "fr": "Désactiver SmartPause",
+                "en": "Disable SmartPause"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "setIgnationAllowed",
+      "title": {
+        "fr": "Gestion de l'autorisation d'allumage",
+        "en": "Managing ignation authorisation"
+      },
+      "titleFormatted": {
+        "en": "Set ignation authorisation to [[ignationAllowed]]",
+        "fr": "Définir l'autorisation d'allumage sur [[ignationAllowed]]"
+      },
+      "args": [
+        {
+          "type": "dropdown",
+          "name": "ignationAllowed",
+          "values": [
+            {
+              "id": "1",
+              "title": {
+                "fr": "Allumage autorisé",
+                "en": "Ignation allowed"
+              }
+            },
+            {
+              "id": "0",
+              "title": {
+                "fr": "Allumage interdit",
+                "en": "Ignation forbbiden"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "setAutoMode",
+      "title": {
+        "fr": "Gestion du mode auto",
+        "en": "Automatic mode management"
+      },
+      "titleFormatted": {
+        "en": "Set automatic mode management to [[selectedMode]]",
+        "fr": "Définir le mode automatique sur [[selectedMode]]"
+      },
+      "args": [
+        {
+          "type": "dropdown",
+          "name": "selectedMode",
+          "values": [
+            {
+              "id": "1",
+              "title": {
+                "fr": "Mode Auto",
+                "en": "Auto Mode"
+              }
+            },
+            {
+              "id": "0",
+              "title": {
+                "fr": "Mode Manuel",
+                "en": "Manual Mode"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "setPelletsReload",
+      "title": {
+        "fr": "La réserve de granulé est rechargée",
+        "en": "The Pellets have been refilled"
       }
+    },
+    {
+      "id": "setAllowSilenceMode",
+      "title": {
+        "fr": "Définir l'autorisation du préréglage silence",
+        "en": "Set preset silence mode authorzation"
+      },
+      "titleFormatted": {
+        "fr": "Autoriser le préréglage silence [[enabled]]",
+        "en": "Allow silence mode preset [[enabled]]"
+      },
+      "args": [ {
+        "type": "checkbox",
+        "name": "enabled",
+        "title": { "fr": "Autoriser" , "en": "Allow"}
+      }]
     }
   ]
 }

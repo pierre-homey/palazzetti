@@ -1,0 +1,47 @@
+{
+  "type": "enum",
+  "getable": true,
+  "setable": true,
+  "title": {
+    "fr": "Puissance de Chauffe",
+    "en": "Fire Power"
+  },
+  "uiComponent": "picker",
+  "values": [
+    {
+      "id": "1",
+      "title": {
+        "fr": "1",
+        "en": "1"
+      }
+    },
+    {
+      "id": "2",
+      "title": {
+        "fr": "2",
+        "en": "1"
+      }
+    },
+    {
+      "id": "3",
+      "title": {
+        "fr": "3",
+        "en": "1"
+      }
+    },
+    {
+      "id": "4",
+      "title": {
+        "fr": "4",
+        "en": "1"
+      }
+    },
+    {
+      "id": "5",
+      "title": {
+        "fr": "5",
+        "en": "5"
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "type": "boolean",
+  "getable": true,
+  "setable": true,
+  "title": {
+    "fr": "Mode Auto",
+    "en": "Auto Mode"
+  },
+  "uiComponent": "button",
+  "icon": "/assets/auto_mode.svg"
+}
