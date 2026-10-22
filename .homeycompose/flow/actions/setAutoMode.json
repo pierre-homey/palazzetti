@@ -1,0 +1,38 @@
+{
+  "id": "setAutoMode",
+  "title": {
+    "fr": "Gestion du mode auto",
+    "en": "Automatic mode management"
+  },
+  "titleFormatted": {
+    "en": "Set automatic mode management to [[selectedMode]]",
+    "fr": "Définir le mode automatique sur [[selectedMode]]"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    },
+    {
+      "type": "dropdown",
+      "name": "selectedMode",
+      "values": [
+        {
+          "id": "1",
+          "title": {
+            "fr": "Mode Auto",
+            "en": "Auto Mode"
+          }
+        },
+        {
+          "id": "0",
+          "title": {
+            "fr": "Mode Manuel",
+            "en": "Manual Mode"
+          }
+        }
+      ]
+    }
+  ]
+}

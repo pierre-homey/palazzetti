@@ -1,0 +1,14 @@
+{
+  "id": "isAutoModeEnabled",
+  "title": {
+    "fr": "Le mode auto !{{est|n'est pas}} activé",
+    "en": "Auto mode !{{is|is not}} enabled"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "id": "setTargetPower",
+  "title": {
+    "en": "Set the Power",
+    "fr": "Définir la puissance de chauffe"
+  },
+  "titleFormatted": {
+    "en": "Set the target power to [[target_power]]",
+    "fr": "Définir la puissance de chauffe sur [[target_power]]"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    },
+    {
+      "name": "target_power",
+      "type": "dropdown",
+      "values": [
+        {
+          "id": "1",
+          "title": {
+            "fr": "1",
+            "en": "1"
+          }
+        },
+        {
+          "id": "2",
+          "title": {
+            "fr": "2",
+            "en": "1"
+          }
+        },
+        {
+          "id": "3",
+          "title": {
+            "fr": "3",
+            "en": "1"
+          }
+        },
+        {
+          "id": "4",
+          "title": {
+            "fr": "4",
+            "en": "1"
+          }
+        },
+        {
+          "id": "5",
+          "title": {
+            "fr": "5",
+            "en": "5"
+          }
+        }
+      ]
+    }
+  ]
+}

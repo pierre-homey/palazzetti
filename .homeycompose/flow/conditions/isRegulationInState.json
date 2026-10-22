@@ -1,0 +1,59 @@
+{
+  "id": "isRegulationInState",
+  "title": {
+    "fr": "La régulation !{{est|n'est pas}} égale à",
+    "en": "Regulation !{{is|is not}} equals to"
+  },
+  "titleFormatted": {
+    "en": "Regulation is equals to [[state]]",
+    "fr": "La régulation est à l'état [[state]]"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    },
+    {
+      "type": "dropdown",
+      "name": "state",
+      "values": [
+        {
+          "id": "SILENTLY",
+          "title": {
+            "fr": "SILENCE",
+            "en": "SILENTLY"
+          }
+        },
+        {
+          "id": "WAITING_TEMP",
+          "title": {
+            "fr": "ATTENTE SMART START",
+            "en": "WAITING SMART START"
+          }
+        },
+        {
+          "id": "BURNING",
+          "title": {
+            "fr": "EN CHAUFFE",
+            "en": "BURNING"
+          }
+        },
+        {
+          "id": "PAUSED",
+          "title": {
+            "fr": "EN PAUSE",
+            "en": "PAUSED"
+          }
+        },
+        {
+          "id": "STOPPED",
+          "title": {
+            "fr": "ARRÊTÉ",
+            "en": "STOPPED"
+          }
+        }
+      ]
+    }
+  ]
+}

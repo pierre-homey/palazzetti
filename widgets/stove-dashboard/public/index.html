@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; overflow: hidden; }
+      body, body.homey-widget { margin: 0; padding: 0 !important; color: inherit; }
+      .dashboard {
+        position: relative;
+        height: 115px;
+        padding: 10px 16px;
+        overflow: hidden;
+        color: inherit;
+        background: transparent;
+      }
+      .status { position: absolute; top: 12px; right: 16px; display: inline-flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 500; white-space: nowrap; opacity: .65; }
+      .status.active { color: #da7338; opacity: 1; }
+      .status.fault { color: #d45252; opacity: 1; }
+      .status-icon { width: 20px; height: 20px; flex-shrink: 0; background: currentColor; -webkit-mask: var(--status-image) center / contain no-repeat; mask: var(--status-image) center / contain no-repeat; }
+      .temperatures { display: flex; align-items: baseline; gap: 4px; margin: 0 0 6px; }
+      .temperature-value { font-size: 64px; line-height: 1.05; font-weight: 500; letter-spacing: -3px; font-variant-numeric: tabular-nums; }
+      .temperature-value.stale { color: #e87532; }
+      .temperature-value sup { font-size: 20px; font-weight: 400; letter-spacing: -.5px; line-height: 0; vertical-align: super; margin-left: 3px; }
+      .target { position: relative; font-size: 21px; font-weight: 500; font-variant-numeric: tabular-nums; opacity: .35; white-space: nowrap; }
+      .target sup { font-size: 11px; font-weight: 400; line-height: 0; vertical-align: super; }
+      .temperature-source-icon { position: absolute; top: -26px; left: 50%; width: 14px; height: 14px; transform: translateX(-50%); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+      .metric { display: flex; align-items: center; gap: 8px; }
+      .footer.heating-inactive .metric { opacity: .35; }
+      .footer:not(.heating-inactive) .metric-power .metric-icon { background: #e87532; opacity: 1; }
+      .footer:not(.heating-inactive) .metric-power .metric-value { color: #e87532; opacity: 1; }
+      .footer:not(.heating-inactive) .metric-fan .metric-icon { background: #4b96c8; opacity: 1; }
+      .footer:not(.heating-inactive) .metric-fan .metric-value { color: #4b96c8; opacity: 1; }
+      .metric-icon { display: block; width: 18px; height: 18px; opacity: .45; background: currentColor; -webkit-mask: var(--metric-image) center / contain no-repeat; mask: var(--metric-image) center / contain no-repeat; }
+      .icon-fire { --metric-image: url('icons/fire.svg'); }
+      .icon-fan { --metric-image: url('icons/fan.svg'); }
+      .metric-value { font-size: 14px; font-weight: 500; opacity: .7; }
+      .footer { display: grid; grid-template-columns: repeat(5, max-content); align-items: center; justify-content: space-between; width: 100%; }
+      .system-state { display: flex; align-items: center; gap: 6px; font-size: 12px; opacity: .3; white-space: nowrap; }
+      .system-state-label { line-height: 9px; }
+      .system-state.enabled { color: #da7338; opacity: 1; }
+      .app-icon { display: block; width: 18px; height: 18px; flex-shrink: 0; background: currentColor; -webkit-mask: var(--app-image) center / contain no-repeat; mask: var(--app-image) center / contain no-repeat; }
+      .pellets { display: flex; align-items: center; justify-self: end; gap: 5px; color: inherit; font-size: 12px; font-weight: 500; white-space: nowrap; }
+      .pellets .app-icon { width: 22px; height: 22px; }
+      .pellets .app-icon, .pellets-label { opacity: .5; }
+      .pellets-label { line-height: 10px; text-align: left; }
+      .pellets.low .app-icon { background: #e87532; opacity: 1; }
+      .pellets.alarm { color: #d45252; }
+      .pellets.alarm .app-icon, .pellets.alarm .pellets-label { opacity: 1; }
+      .message { display: grid; height: 115px; place-items: center; padding: 12px; overflow: hidden; opacity: .65; }
+      .message.error { color: #b23e25; }
+      @media (max-width: 480px) {
+        .dashboard { padding: 8px 12px; }
+        .temperature-value { font-size: 56px; }
+        .target { font-size: 18px; }
+        .status { top: 10px; right: 12px; gap: 5px; font-size: 15px; }
+        .status-icon { width: 17px; height: 17px; }
+        .metric { gap: 5px; }
+        .system-state { gap: 4px; font-size: 10px; }
+        .system-state-label { line-height: 8px; }
+        .pellets { gap: 4px; font-size: 10px; }
+        .pellets .app-icon { width: 20px; height: 20px; }
+        .pellets-label { line-height: 8px; }
+      }
+    </style>
+  </head>
+  <body class="homey-widget">
+    <main id="root" class="message homey-text-regular homey-text-align-center" role="status">
+      Chargement du poêle…
+    </main>
+    <script>
+      const root = document.getElementById('root');
+      let selectedSourceId;
+
+      function formatValue(value, suffix = '') {
+        if (value === null || value === undefined || value === '') return '—';
+        const number = Number(value);
+        return Number.isFinite(number) ? `${number}${suffix}` : '—';
+      }
+
+      function statusLabel(state, regulation) {
+        if (state !== 'FAULTED' && regulation === 'PAUSED') return 'En pause';
+        const labels = {
+          STARTING: 'Allumage',
+          STARTED: 'En chauffe',
+          STOPPING: 'Arrêt en cours',
+          STOPPED: 'Arrêté',
+          FAULTED: 'En défaut',
+          UNKNOW: 'État inconnu',
+        };
+        if (state === 'STOPPED' && regulation && regulation !== 'STOPPED') {
+          return { WAITING_TEMP: 'En attente', HORS_GEL: 'Hors gel', BURNING: 'En attente', SILENTLY: 'En attente' }[regulation] || 'En attente';
+        }
+        return labels[state] || 'État inconnu';
+      }
+
+      function statusIcon(state, regulation) {
+        if (state === 'FAULTED') return 'triangle-alert';
+        if (regulation === 'PAUSED') return 'pause';
+        if (state === 'STARTING') return 'loader';
+        if (state === 'STARTED') return 'fire';
+        if (state === 'STOPPING') return 'power';
+        if (state === 'STOPPED') {
+          if (regulation === 'HORS_GEL') return 'snowflake';
+          if (regulation && regulation !== 'STOPPED') return 'clock';
+          return 'power';
+        }
+        return 'circle-question-mark';
+      }
+
+      function showMessage(message, isError = false) {
+        root.className = `message homey-text-regular homey-text-align-center${isError ? ' error' : ''}`;
+        root.textContent = message;
+      }
+
+      function render(data) {
+        const active = data.regulation !== 'PAUSED' && ['STARTING', 'STARTED'].includes(data.state);
+        root.className = 'dashboard';
+        root.innerHTML = `
+          <section class="temperatures" aria-label="Températures">
+            <div aria-label="Température mesurée">
+              <strong class="temperature-value${data.temperatureStale === true ? ' stale' : ''}">${formatValue(data.temperature)}<sup>°C</sup></strong>
+            </div>
+            <div class="target" aria-label="Température cible${data.externalTemperature === true ? ', mesure par sonde externe' : ''}">
+              ${data.externalTemperature === true ? '<svg class="temperature-source-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 16a5.5 5.5 0 0 1 0-8"/><path d="M5.5 19a9.5 9.5 0 0 1 0-14"/><circle cx="12" cy="12" r="2"/></svg>' : ''}
+              ${formatValue(data.targetTemperature)}<sup>°C</sup>
+            </div>
+          </section>
+          <span class="status${active ? ' active' : ''}${data.state === 'FAULTED' ? ' fault' : ''}">${statusLabel(data.state, data.regulation)}<span class="status-icon" style="--status-image: url('icons/${statusIcon(data.state, data.regulation)}.svg')" aria-hidden="true"></span></span>
+          <section class="footer${active ? '' : ' heating-inactive'}" aria-label="État et réglages du poêle">
+            <span class="metric metric-power">
+              <span class="label homey-text-regular" role="img" aria-label="Puissance"><span class="metric-icon icon-fire" aria-hidden="true"></span></span>
+              <strong class="metric-value homey-text-regular">${formatValue(data.power)}</strong>
+            </span>
+            <span class="metric metric-fan">
+              <span class="label homey-text-regular" role="img" aria-label="Ventilation"><span class="metric-icon icon-fan" aria-hidden="true"></span></span>
+              <strong class="metric-value homey-text-regular">${formatValue(data.fanSpeed)}</strong>
+            </span>
+            <span class="pellets${data.pelletsAlarm === true ? ' alarm' : data.pelletsLow === true ? ' low' : ''}" role="${data.pelletsAlarm === true ? 'alert' : 'status'}">
+              <span class="app-icon" style="--app-image: url('icons/pellets_alarm.svg')" aria-hidden="true"></span>
+              <span class="pellets-label">${data.pelletsAlarm === true ? 'Tout est<br>consommé' : `${formatValue(data.pelletsConsumed)} kg<br>consommés`}</span>
+            </span>
+            <span class="system-state${data.autoMode === true ? ' enabled' : ''}" aria-label="Mode automatique ${data.autoMode === true ? 'activé' : 'désactivé'}">
+              <span class="app-icon" style="--app-image: url('icons/auto_mode.svg')" aria-hidden="true"></span>Auto
+            </span>
+            <span class="system-state${data.ignitionAllowed === true ? ' enabled' : ''}" aria-label="Allumage ${data.ignitionAllowed === true ? 'autorisé' : 'interdit'}">
+              <span class="app-icon" style="--app-image: url('icons/block_start.svg')" aria-hidden="true"></span><span class="system-state-label">Allumage<br>${data.ignitionAllowed === true ? 'autorisé' : 'interdit'}</span>
+            </span>
+          </section>
+          `;
+      }
+
+      function onHomeyReady(Homey) {
+        Homey.ready({ height: 115 });
+
+        function loadSelectedDevice() {
+          const selectedDeviceId = Homey.getDeviceIds()[0];
+          if (!selectedDeviceId) {
+            selectedSourceId = undefined;
+            showMessage('Sélectionnez un poêle dans les réglages du widget.');
+            return;
+          }
+          selectedSourceId = undefined;
+          Homey.api('GET', `/state/${encodeURIComponent(selectedDeviceId)}`)
+            .then(data => {
+              selectedSourceId = data.sourceId;
+              render(data);
+            })
+            .catch(error => {
+              console.error('Unable to load stove dashboard data', error);
+              const detail = typeof error === 'string' ? error : error?.message || 'Erreur sans détail';
+              showMessage(`Impossible de charger les données du poêle : ${detail} (diagnostic 2)`, true);
+            });
+        }
+
+        Homey.on('settings', loadSelectedDevice);
+        Homey.on('stove_dashboard_update', data => {
+          if (data.sourceId === selectedSourceId) render(data);
+        });
+        loadSelectedDevice();
+      }
+    </script>
+  </body>
+</html>

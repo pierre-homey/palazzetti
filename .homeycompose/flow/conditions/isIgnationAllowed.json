@@ -1,0 +1,14 @@
+{
+  "id": "isIgnationAllowed",
+  "title": {
+    "fr": "L'allumage !{{est|n'est pas}} autorisé",
+    "en": "Ignation !{{is|is not}} allowed"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    }
+  ]
+}

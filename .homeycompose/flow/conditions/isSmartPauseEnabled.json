@@ -1,0 +1,14 @@
+{
+  "id": "isSmartPauseEnabled",
+  "title": {
+    "fr": "La pause intelligente !{{est|n'est pas}} activée",
+    "en": "Smart pause !{{is|is not}} enabled"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    }
+  ]
+}

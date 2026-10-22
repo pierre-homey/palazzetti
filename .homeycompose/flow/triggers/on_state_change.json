@@ -1,0 +1,25 @@
+{
+  "id": "on_state_change",
+  "title": {
+    "en": "State has changed",
+    "fr": "L'état à changé"
+  },
+  "tokens": [
+    {
+      "name": "state",
+      "type": "string",
+      "title": {
+        "fr": "Etat",
+        "en": "State"
+      },
+      "example": "STOPPED"
+    }
+  ],
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    }
+  ]
+}

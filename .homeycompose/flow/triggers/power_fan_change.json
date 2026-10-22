@@ -1,0 +1,46 @@
+{
+  "id": "power_fan_change",
+  "title": {
+    "fr": "La puissance ou la ventilation du poêle change",
+    "en": "The stove power or fan speed changes"
+  },
+  "hint": {
+    "fr": "Se déclenche uniquement pendant l'allumage ou la chauffe, quand la puissance ou la ventilation change.",
+    "en": "Triggers only while the stove is starting or burning, when its power or fan speed changes."
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "temperature",
+      "type": "number",
+      "title": {
+        "fr": "Température mesurée (°C)",
+        "en": "Measured temperature (°C)"
+      }
+    },
+    {
+      "name": "power",
+      "type": "number",
+      "title": {
+        "fr": "Puissance de chauffe",
+        "en": "Heating power"
+      },
+      "example": 3
+    },
+    {
+      "name": "fan_speed",
+      "type": "number",
+      "title": {
+        "fr": "Vitesse de ventilation",
+        "en": "Fan speed"
+      },
+      "example": 2
+    }
+  ]
+}

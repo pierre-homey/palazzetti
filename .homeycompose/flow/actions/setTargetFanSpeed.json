@@ -1,0 +1,80 @@
+{
+  "id": "setTargetFanSpeed",
+  "title": {
+    "en": "Set the fan speed",
+    "fr": "Définir la vitesse de ventillation"
+  },
+  "titleFormatted": {
+    "en": "Set the target fan speed to [[target_fan_speed]]",
+    "fr": "Définir la vitesse de ventillation sur [[target_fan_speed]]"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    },
+    {
+      "name": "target_fan_speed",
+      "type": "dropdown",
+      "values": [
+        {
+          "id": "0",
+          "title": {
+            "fr": "Arrêt",
+            "en": "OFF"
+          }
+        },
+        {
+          "id": "1",
+          "title": {
+            "fr": "1",
+            "en": "1"
+          }
+        },
+        {
+          "id": "2",
+          "title": {
+            "fr": "2",
+            "en": "2"
+          }
+        },
+        {
+          "id": "3",
+          "title": {
+            "fr": "3",
+            "en": "2"
+          }
+        },
+        {
+          "id": "4",
+          "title": {
+            "fr": "4",
+            "en": "4"
+          }
+        },
+        {
+          "id": "5",
+          "title": {
+            "fr": "5",
+            "en": "5"
+          }
+        },
+        {
+          "id": "6",
+          "title": {
+            "fr": "Max",
+            "en": "Hight"
+          }
+        },
+        {
+          "id": "7",
+          "title": {
+            "fr": "Auto",
+            "en": "Auto"
+          }
+        }
+      ]
+    }
+  ]
+}

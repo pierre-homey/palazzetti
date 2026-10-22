@@ -1,0 +1,58 @@
+{
+  "id": "temperature_above_target",
+  "title": {
+    "fr": "La température mesurée atteint la consigne + X °C",
+    "en": "The measured temperature reaches the target + X °C"
+  },
+  "titleFormatted": {
+    "fr": "La température mesurée atteint la consigne + [[delta]] °C",
+    "en": "The measured temperature reaches the target + [[delta]] °C"
+  },
+  "hint": {
+    "fr": "Se déclenche une fois au franchissement du seuil, y compris si la consigne change. La première mesure après un redémarrage sert de référence.",
+    "en": "Triggers once when crossing the threshold, including when the target changes. The first sample after a restart establishes a baseline."
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    },
+    {
+      "type": "number",
+      "name": "delta",
+      "min": 0,
+      "step": 0.1,
+      "placeholder": {
+        "fr": "Écart en °C",
+        "en": "Offset in °C"
+      }
+    }
+  ],
+  "tokens": [
+    {
+      "name": "temperature",
+      "type": "number",
+      "title": {
+        "fr": "Température mesurée (°C)",
+        "en": "Measured temperature (°C)"
+      }
+    },
+    {
+      "name": "target",
+      "type": "number",
+      "title": {
+        "fr": "Consigne (°C)",
+        "en": "Target temperature (°C)"
+      }
+    },
+    {
+      "name": "delta",
+      "type": "number",
+      "title": {
+        "fr": "Écart à la consigne (°C)",
+        "en": "Offset from target (°C)"
+      }
+    }
+  ]
+}

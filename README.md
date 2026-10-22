@@ -9,10 +9,14 @@ Le tag local `before-promise-fixes-2026-09-25` pointe sur le commit `2990f9c`, c
 
 ## Fonctionnement corrigé
 
+- Le widget de tableau de bord nécessite Homey `>=12.3.0`, la sélection utilise la propriété `devices` du widget et un seul appareil CBox est sélectionnable.
 - Toutes les opérations asynchrones renvoient leurs promesses ; le code applicatif n'utilise ni `async` ni `await`. Les lectures synchrones Homey restent synchrones.
 - Les entrées SDK (capacités, actions Flow, paramètres et interrogation périodique) partagent une file par périphérique. Les méthodes internes ne réentrent pas dans cette file. Une erreur est renvoyée à l'appelant sans bloquer les opérations suivantes.
 - La CBox est interrogée au démarrage, puis 60 secondes après la fin de chaque cycle. Une panne initiale n'arrête pas les tentatives. Les requêtes expirent réellement au bout de 5 secondes ; erreurs HTTP, réponses tronquées, JSON invalide et refus CBox sont rejetés. Les commandes ne sont pas réessayées automatiquement.
 - La régulation utilise un échantillon complet et est réévaluée à chaque cycle, même si la température n'a pas changé. Le hors-gel conserve son mode pendant les pauses. Les conditions d'allumage sont des booléens ; l'autorisation d'allumage s'applique également aux commandes manuelles.
+- Autoriser l'allumage réévalue immédiatement la régulation automatique lorsque le poêle attend de démarrer.
+- Le Flow de changement de puissance ou de ventilation se déclenche uniquement pendant l'allumage ou la chauffe ; il fournit la température mesurée, la puissance et la vitesse de ventilation.
+- Le widget de tableau de bord affiche la consigne, la température mesurée, la puissance, la ventilation et l'état du poêle. Il reçoit les changements par événements temps réel, sans interrogation périodique.
 - Après un accusé de réception ON/OFF, l'état interne devient transitoire pour éviter une seconde commande immédiate. L'état affiché et le Flow de changement d'état suivent le prochain retour CBox. Les statuts non reconnus deviennent `UNKNOW` et ne permettent pas un démarrage automatique.
 - Les Flows reçoivent les erreurs au lieu d'annoncer un succès prématuré. Les écritures des capacités et compteurs sont attendues par chaînage.
 - Les consignes sont entières, conformément à l'arrondi déjà présent dans les commandes CBox. Le compteur d'énergie reste une estimation fondée sur la puissance électrique estimée et le temps écoulé, pas une mesure réelle.

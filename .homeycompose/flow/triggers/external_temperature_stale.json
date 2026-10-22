@@ -1,0 +1,14 @@
+{
+  "id": "external_temperature_stale",
+  "title": {
+    "en": "The remote temperature is stale",
+    "fr": "La température déportée est périmée"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    }
+  ]
+}

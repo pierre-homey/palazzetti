@@ -1,0 +1,22 @@
+{
+  "id": "setExternalTemp",
+  "title": {
+    "fr": "Enregistrer température déportée",
+    "en": "Record deported temperature"
+  },
+  "titleFormatted": {
+    "en": "Set the deported temperature to [[temperature]]",
+    "fr": "Définir la température déportée sur [[temperature]]"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    },
+    {
+      "type": "number",
+      "name": "temperature"
+    }
+  ]
+}

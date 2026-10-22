@@ -1,0 +1,26 @@
+{
+  "id": "setAllowSilenceMode",
+  "title": {
+    "fr": "Définir l'autorisation du préréglage silence",
+    "en": "Set preset silence mode authorzation"
+  },
+  "titleFormatted": {
+    "fr": "Autoriser le préréglage silence [[enabled]]",
+    "en": "Allow silence mode preset [[enabled]]"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    },
+    {
+      "type": "checkbox",
+      "name": "enabled",
+      "title": {
+        "fr": "Autoriser",
+        "en": "Allow"
+      }
+    }
+  ]
+}

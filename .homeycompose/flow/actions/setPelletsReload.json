@@ -1,0 +1,14 @@
+{
+  "id": "setPelletsReload",
+  "title": {
+    "fr": "La réserve de granulé est rechargée",
+    "en": "The Pellets have been refilled"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    }
+  ]
+}

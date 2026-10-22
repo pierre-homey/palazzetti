@@ -3,11 +3,15 @@
   "version": "1.0.0",
   "main": "app.js",
   "devDependencies": {
-    "homey": "^2.0.6"
+    "eslint": "^8.57.1",
+    "homey": "^4.5.2"
   },
   "scripts": {
     "test": "node --test test/*.test.js",
-    "lint": "eslint app.js drivers lib test",
+    "lint": "eslint app.js drivers lib test widgets",
     "validate": "homey app validate"
+  },
+  "dependencies": {
+    "homey-api": "^3.21.0"
   }
 }

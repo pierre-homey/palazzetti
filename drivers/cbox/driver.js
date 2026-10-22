@@ -9,11 +9,20 @@ class CboxDriver extends Homey.Driver {
   }
 
   triggerFlowOnStateChange(device, state) {
-    return this.onChangeState.trigger(device, { state }, {});
+    return this.onChangeState.trigger(device, { state }, {})
+      .then(() => this.onChangeStateTo.trigger(device, { state }, { state }));
   }
 
   onInit() {
+    this.temperatureAboveTarget = this.homey.flow.getDeviceTriggerCard('temperature_above_target');
+    this.temperatureAboveTarget.registerRunListener((args, state) => {
+      const delta = args.delta;
+      return Promise.resolve(typeof delta === 'number' && Number.isFinite(delta) && delta >= 0
+        && state.previousDelta < delta && state.delta >= delta);
+    });
     this.onChangeState = this.homey.flow.getDeviceTriggerCard('on_state_change');
+    this.onChangeStateTo = this.homey.flow.getDeviceTriggerCard('on_state_change_to');
+    this.onChangeStateTo.registerRunListener((args, state) => Promise.resolve(args.state === state.state));
     const actions = {
       setTargetPower: args => args.device.onCapabilityTargetPower(args.target_power),
       setTargetFanSpeed: args => args.device.onCapabilityTargetFanSpeed(args.target_fan_speed),

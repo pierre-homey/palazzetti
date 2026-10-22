@@ -1,5 +1,7 @@
 {
+  "waitForStop" : "The stove is shutting down. Wait until it has stopped completely before turning it on again.",
   "illegalStateOnOff" : "State not compatible with stopping or starting the stove",
   "illegalRegulationMode" : "Regulation mode not compatible with the stove state",
-  "manualActionImpossible" : "Manual action impossible"
+  "manualActionImpossible" : "Manual action impossible",
+  "communicationError" : "Communication error with the stove"
 }

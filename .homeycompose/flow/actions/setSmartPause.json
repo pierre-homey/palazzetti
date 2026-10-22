@@ -1,0 +1,38 @@
+{
+  "id": "setSmartPause",
+  "title": {
+    "fr": "Gestion du SmartPause",
+    "en": "SmartPause management"
+  },
+  "titleFormatted": {
+    "en": "Set the smart pause magement to [[smartPause]]",
+    "fr": "Définir la gestion du SmartPause sur [[smartPause]]"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    },
+    {
+      "type": "dropdown",
+      "name": "smartPause",
+      "values": [
+        {
+          "id": "1",
+          "title": {
+            "fr": "Activer SmartPause",
+            "en": "Enable SmartPause"
+          }
+        },
+        {
+          "id": "2",
+          "title": {
+            "fr": "Désactiver SmartPause",
+            "en": "Disable SmartPause"
+          }
+        }
+      ]
+    }
+  ]
+}

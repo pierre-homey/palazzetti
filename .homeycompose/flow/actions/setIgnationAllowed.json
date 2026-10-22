@@ -1,0 +1,38 @@
+{
+  "id": "setIgnationAllowed",
+  "title": {
+    "fr": "Gestion de l'autorisation d'allumage",
+    "en": "Managing ignation authorisation"
+  },
+  "titleFormatted": {
+    "en": "Set ignation authorisation to [[ignationAllowed]]",
+    "fr": "Définir l'autorisation d'allumage sur [[ignationAllowed]]"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    },
+    {
+      "type": "dropdown",
+      "name": "ignationAllowed",
+      "values": [
+        {
+          "id": "1",
+          "title": {
+            "fr": "Allumage autorisé",
+            "en": "Ignation allowed"
+          }
+        },
+        {
+          "id": "0",
+          "title": {
+            "fr": "Allumage interdit",
+            "en": "Ignation forbbiden"
+          }
+        }
+      ]
+    }
+  ]
+}

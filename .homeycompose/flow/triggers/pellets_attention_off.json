@@ -1,0 +1,14 @@
+{
+  "id": "pellets_attention_off",
+  "title": {
+    "en": "The pellet container is refilled",
+    "fr": "La réserve de granulé est rechargée"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    }
+  ]
+}

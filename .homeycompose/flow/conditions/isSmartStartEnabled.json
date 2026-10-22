@@ -1,0 +1,14 @@
+{
+  "id": "isSmartStartEnabled",
+  "title": {
+    "fr": "Le démarrage intelligent !{{est|n'est pas}} activé",
+    "en": "Smartstart !{{is|is not}} enabled"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    }
+  ]
+}

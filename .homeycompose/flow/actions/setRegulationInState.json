@@ -1,0 +1,45 @@
+{
+  "id": "setRegulationInState",
+  "title": {
+    "fr": "Changer le mode de régulation",
+    "en": "Change regulation mode"
+  },
+  "titleFormatted": {
+    "en": "Set the target regulation mode to [[state]]",
+    "fr": "Définir le mode de régulation sur [[state]]"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    },
+    {
+      "type": "dropdown",
+      "name": "state",
+      "values": [
+        {
+          "id": "SILENTLY",
+          "title": {
+            "fr": "SILENCE",
+            "en": "SILENTLY"
+          }
+        },
+        {
+          "id": "BURNING",
+          "title": {
+            "fr": "EN CHAUFFE",
+            "en": "BURNING"
+          }
+        },
+        {
+          "id": "PAUSED",
+          "title": {
+            "fr": "EN PAUSE",
+            "en": "PAUSED"
+          }
+        }
+      ]
+    }
+  ]
+}

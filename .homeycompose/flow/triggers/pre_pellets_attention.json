@@ -1,0 +1,14 @@
+{
+  "id": "pre_pellets_attention",
+  "title": {
+    "en": "The pellet container is almost empty",
+    "fr": "La réserve de granulé est bientôt vide"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    }
+  ]
+}

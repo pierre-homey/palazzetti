@@ -1,0 +1,45 @@
+{
+  "id": "setPreset",
+  "title": {
+    "en": "Set preset",
+    "fr": "Appliquer un préréglage"
+  },
+  "titleFormatted": {
+    "en": "Set the target preset to [[preset]]",
+    "fr": "Définir le préréglage sur [[preset]]"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    },
+    {
+      "name": "preset",
+      "type": "dropdown",
+      "values": [
+        {
+          "id": "0",
+          "title": {
+            "fr": "Préréglage 0",
+            "en": "Preset 0"
+          }
+        },
+        {
+          "id": "1",
+          "title": {
+            "fr": "Préréglage 1",
+            "en": "Preset 1"
+          }
+        },
+        {
+          "id": "2",
+          "title": {
+            "fr": "Préréglage 2",
+            "en": "Preset 2"
+          }
+        }
+      ]
+    }
+  ]
+}

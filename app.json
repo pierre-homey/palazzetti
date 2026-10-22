@@ -3,7 +3,10 @@
   "id": "com.palazzetti",
   "version": "1.5.0",
   "sdk": 3,
-  "compatibility": ">=5.0.0",
+  "permissions": [
+    "homey:manager:api"
+  ],
+  "compatibility": ">=12.3.0",
   "brandColor": "#75080a",
   "name": {
     "en": "Palazzetti CBOX",
@@ -25,38 +28,10 @@
   "flow": {
     "triggers": [
       {
-        "id": "pellets_attention",
+        "id": "external_temperature_stale",
         "title": {
-          "en": "The pellet container is empty",
-          "fr": "La réserve de granulé est vide"
-        },
-        "args": [
-          {
-            "type": "device",
-            "name": "device",
-            "filter": "driver_id=cbox"
-          }
-        ]
-      },
-      {
-        "id": "pellets_attention_off",
-        "title": {
-          "en": "The pellet container is refilled",
-          "fr": "La réserve de granulé est rechargée"
-        },
-        "args": [
-          {
-            "type": "device",
-            "name": "device",
-            "filter": "driver_id=cbox"
-          }
-        ]
-      },
-      {
-        "id": "pre_pellets_attention",
-        "title": {
-          "en": "The pellet container is almost empty",
-          "fr": "La réserve de granulé est bientôt vide"
+          "en": "The remote temperature is stale",
+          "fr": "La température déportée est périmée"
         },
         "args": [
           {
@@ -90,14 +65,251 @@
             "filter": "driver_id=cbox"
           }
         ]
+      },
+      {
+        "id": "on_state_change_to",
+        "title": {
+          "fr": "L'état du poêle a changé",
+          "en": "The stove state has changed"
+        },
+        "titleFormatted": {
+          "fr": "L'état du poêle a changé pour [[state]]",
+          "en": "The stove state has changed to [[state]]"
+        },
+        "tokens": [
+          {
+            "name": "state",
+            "type": "string",
+            "title": {
+              "fr": "État",
+              "en": "State"
+            },
+            "example": "STOPPED"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
+            "type": "dropdown",
+            "name": "state",
+            "values": [
+              {
+                "id": "STOPPED",
+                "title": {
+                  "fr": "Arrêté",
+                  "en": "Stopped"
+                }
+              },
+              {
+                "id": "STARTING",
+                "title": {
+                  "fr": "Allumage",
+                  "en": "Starting"
+                }
+              },
+              {
+                "id": "STARTED",
+                "title": {
+                  "fr": "Allumé",
+                  "en": "Started"
+                }
+              },
+              {
+                "id": "STOPPING",
+                "title": {
+                  "fr": "En arrêt",
+                  "en": "Stopping"
+                }
+              },
+              {
+                "id": "FAULTED",
+                "title": {
+                  "fr": "En défaut",
+                  "en": "Faulted"
+                }
+              },
+              {
+                "id": "UNKNOW",
+                "title": {
+                  "fr": "Inconnu",
+                  "en": "Unknown"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "pellets_attention",
+        "title": {
+          "en": "The pellet container is empty",
+          "fr": "La réserve de granulé est vide"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ]
+      },
+      {
+        "id": "pellets_attention_off",
+        "title": {
+          "en": "The pellet container is refilled",
+          "fr": "La réserve de granulé est rechargée"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ]
+      },
+      {
+        "id": "power_fan_change",
+        "title": {
+          "fr": "La puissance ou la ventilation du poêle change",
+          "en": "The stove power or fan speed changes"
+        },
+        "hint": {
+          "fr": "Se déclenche uniquement pendant l'allumage ou la chauffe, quand la puissance ou la ventilation change.",
+          "en": "Triggers only while the stove is starting or burning, when its power or fan speed changes."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ],
+        "tokens": [
+          {
+            "name": "temperature",
+            "type": "number",
+            "title": {
+              "fr": "Température mesurée (°C)",
+              "en": "Measured temperature (°C)"
+            }
+          },
+          {
+            "name": "power",
+            "type": "number",
+            "title": {
+              "fr": "Puissance de chauffe",
+              "en": "Heating power"
+            },
+            "example": 3
+          },
+          {
+            "name": "fan_speed",
+            "type": "number",
+            "title": {
+              "fr": "Vitesse de ventilation",
+              "en": "Fan speed"
+            },
+            "example": 2
+          }
+        ]
+      },
+      {
+        "id": "pre_pellets_attention",
+        "title": {
+          "en": "The pellet container is almost empty",
+          "fr": "La réserve de granulé est bientôt vide"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ]
+      },
+      {
+        "id": "temperature_above_target",
+        "title": {
+          "fr": "La température mesurée atteint la consigne + X °C",
+          "en": "The measured temperature reaches the target + X °C"
+        },
+        "titleFormatted": {
+          "fr": "La température mesurée atteint la consigne + [[delta]] °C",
+          "en": "The measured temperature reaches the target + [[delta]] °C"
+        },
+        "hint": {
+          "fr": "Se déclenche une fois au franchissement du seuil, y compris si la consigne change. La première mesure après un redémarrage sert de référence.",
+          "en": "Triggers once when crossing the threshold, including when the target changes. The first sample after a restart establishes a baseline."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
+            "type": "number",
+            "name": "delta",
+            "min": 0,
+            "step": 0.1,
+            "placeholder": {
+              "fr": "Écart en °C",
+              "en": "Offset in °C"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "temperature",
+            "type": "number",
+            "title": {
+              "fr": "Température mesurée (°C)",
+              "en": "Measured temperature (°C)"
+            }
+          },
+          {
+            "name": "target",
+            "type": "number",
+            "title": {
+              "fr": "Consigne (°C)",
+              "en": "Target temperature (°C)"
+            }
+          },
+          {
+            "name": "delta",
+            "type": "number",
+            "title": {
+              "fr": "Écart à la consigne (°C)",
+              "en": "Offset from target (°C)"
+            }
+          }
+        ]
       }
     ],
     "conditions": [
       {
-        "id": "isSmartStartEnabled",
+        "id": "isAutoModeEnabled",
         "title": {
-          "fr": "Le démarrage intelligent !{{est|n'est pas}} activé",
-          "en": "Smartstart !{{is|is not}} enabled"
+          "fr": "Le mode auto !{{est|n'est pas}} activé",
+          "en": "Auto mode !{{is|is not}} enabled"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          }
+        ]
+      },
+      {
+        "id": "isIgnationAllowed",
+        "title": {
+          "fr": "L'allumage !{{est|n'est pas}} autorisé",
+          "en": "Ignation !{{is|is not}} allowed"
         },
         "args": [
           {
@@ -181,24 +393,10 @@
         ]
       },
       {
-        "id": "isIgnationAllowed",
+        "id": "isSmartStartEnabled",
         "title": {
-          "fr": "L'allumage !{{est|n'est pas}} autorisé",
-          "en": "Ignation !{{is|is not}} allowed"
-        },
-        "args": [
-          {
-            "type": "device",
-            "name": "device",
-            "filter": "driver_id=cbox"
-          }
-        ]
-      },
-      {
-        "id": "isAutoModeEnabled",
-        "title": {
-          "fr": "Le mode auto !{{est|n'est pas}} activé",
-          "en": "Auto mode !{{is|is not}} enabled"
+          "fr": "Le démarrage intelligent !{{est|n'est pas}} activé",
+          "en": "Smartstart !{{is|is not}} enabled"
         },
         "args": [
           {
@@ -211,14 +409,14 @@
     ],
     "actions": [
       {
-        "id": "setTargetPower",
+        "id": "setAllowSilenceMode",
         "title": {
-          "en": "Set the Power",
-          "fr": "Définir la puissance de chauffe"
+          "fr": "Définir l'autorisation du préréglage silence",
+          "en": "Set preset silence mode authorzation"
         },
         "titleFormatted": {
-          "en": "Set the target power to [[target_power]]",
-          "fr": "Définir la puissance de chauffe sur [[target_power]]"
+          "fr": "Autoriser le préréglage silence [[enabled]]",
+          "en": "Allow silence mode preset [[enabled]]"
         },
         "args": [
           {
@@ -227,42 +425,47 @@
             "filter": "driver_id=cbox"
           },
           {
-            "name": "target_power",
+            "type": "checkbox",
+            "name": "enabled",
+            "title": {
+              "fr": "Autoriser",
+              "en": "Allow"
+            }
+          }
+        ]
+      },
+      {
+        "id": "setAutoMode",
+        "title": {
+          "fr": "Gestion du mode auto",
+          "en": "Automatic mode management"
+        },
+        "titleFormatted": {
+          "en": "Set automatic mode management to [[selectedMode]]",
+          "fr": "Définir le mode automatique sur [[selectedMode]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
             "type": "dropdown",
+            "name": "selectedMode",
             "values": [
               {
                 "id": "1",
                 "title": {
-                  "fr": "1",
-                  "en": "1"
+                  "fr": "Mode Auto",
+                  "en": "Auto Mode"
                 }
               },
               {
-                "id": "2",
+                "id": "0",
                 "title": {
-                  "fr": "2",
-                  "en": "1"
-                }
-              },
-              {
-                "id": "3",
-                "title": {
-                  "fr": "3",
-                  "en": "1"
-                }
-              },
-              {
-                "id": "4",
-                "title": {
-                  "fr": "4",
-                  "en": "1"
-                }
-              },
-              {
-                "id": "5",
-                "title": {
-                  "fr": "5",
-                  "en": "5"
+                  "fr": "Mode Manuel",
+                  "en": "Manual Mode"
                 }
               }
             ]
@@ -270,14 +473,14 @@
         ]
       },
       {
-        "id": "setTargetFanSpeed",
+        "id": "setExternalTemp",
         "title": {
-          "en": "Set the fan speed",
-          "fr": "Définir la vitesse de ventillation"
+          "fr": "Enregistrer température déportée",
+          "en": "Record deported temperature"
         },
         "titleFormatted": {
-          "en": "Set the target fan speed to [[target_fan_speed]]",
-          "fr": "Définir la vitesse de ventillation sur [[target_fan_speed]]"
+          "en": "Set the deported temperature to [[temperature]]",
+          "fr": "Définir la température déportée sur [[temperature]]"
         },
         "args": [
           {
@@ -286,66 +489,60 @@
             "filter": "driver_id=cbox"
           },
           {
-            "name": "target_fan_speed",
+            "type": "number",
+            "name": "temperature"
+          }
+        ]
+      },
+      {
+        "id": "setIgnationAllowed",
+        "title": {
+          "fr": "Gestion de l'autorisation d'allumage",
+          "en": "Managing ignation authorisation"
+        },
+        "titleFormatted": {
+          "en": "Set ignation authorisation to [[ignationAllowed]]",
+          "fr": "Définir l'autorisation d'allumage sur [[ignationAllowed]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
+          },
+          {
             "type": "dropdown",
+            "name": "ignationAllowed",
             "values": [
-              {
-                "id": "0",
-                "title": {
-                  "fr": "Arrêt",
-                  "en": "OFF"
-                }
-              },
               {
                 "id": "1",
                 "title": {
-                  "fr": "1",
-                  "en": "1"
+                  "fr": "Allumage autorisé",
+                  "en": "Ignation allowed"
                 }
               },
               {
-                "id": "2",
+                "id": "0",
                 "title": {
-                  "fr": "2",
-                  "en": "2"
-                }
-              },
-              {
-                "id": "3",
-                "title": {
-                  "fr": "3",
-                  "en": "2"
-                }
-              },
-              {
-                "id": "4",
-                "title": {
-                  "fr": "4",
-                  "en": "4"
-                }
-              },
-              {
-                "id": "5",
-                "title": {
-                  "fr": "5",
-                  "en": "5"
-                }
-              },
-              {
-                "id": "6",
-                "title": {
-                  "fr": "Max",
-                  "en": "Hight"
-                }
-              },
-              {
-                "id": "7",
-                "title": {
-                  "fr": "Auto",
-                  "en": "Auto"
+                  "fr": "Allumage interdit",
+                  "en": "Ignation forbbiden"
                 }
               }
             ]
+          }
+        ]
+      },
+      {
+        "id": "setPelletsReload",
+        "title": {
+          "fr": "La réserve de granulé est rechargée",
+          "en": "The Pellets have been refilled"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=cbox"
           }
         ]
       },
@@ -440,28 +637,6 @@
         ]
       },
       {
-        "id": "setExternalTemp",
-        "title": {
-          "fr": "Enregistrer température déportée",
-          "en": "Record deported temperature"
-        },
-        "titleFormatted": {
-          "en": "Set the deported temperature to [[temperature]]",
-          "fr": "Définir la température déportée sur [[temperature]]"
-        },
-        "args": [
-          {
-            "type": "device",
-            "name": "device",
-            "filter": "driver_id=cbox"
-          },
-          {
-            "type": "number",
-            "name": "temperature"
-          }
-        ]
-      },
-      {
         "id": "setSmartPause",
         "title": {
           "fr": "Gestion du SmartPause",
@@ -500,14 +675,14 @@
         ]
       },
       {
-        "id": "setIgnationAllowed",
+        "id": "setTargetFanSpeed",
         "title": {
-          "fr": "Gestion de l'autorisation d'allumage",
-          "en": "Managing ignation authorisation"
+          "en": "Set the fan speed",
+          "fr": "Définir la vitesse de ventillation"
         },
         "titleFormatted": {
-          "en": "Set ignation authorisation to [[ignationAllowed]]",
-          "fr": "Définir l'autorisation d'allumage sur [[ignationAllowed]]"
+          "en": "Set the target fan speed to [[target_fan_speed]]",
+          "fr": "Définir la vitesse de ventillation sur [[target_fan_speed]]"
         },
         "args": [
           {
@@ -516,21 +691,63 @@
             "filter": "driver_id=cbox"
           },
           {
+            "name": "target_fan_speed",
             "type": "dropdown",
-            "name": "ignationAllowed",
             "values": [
-              {
-                "id": "1",
-                "title": {
-                  "fr": "Allumage autorisé",
-                  "en": "Ignation allowed"
-                }
-              },
               {
                 "id": "0",
                 "title": {
-                  "fr": "Allumage interdit",
-                  "en": "Ignation forbbiden"
+                  "fr": "Arrêt",
+                  "en": "OFF"
+                }
+              },
+              {
+                "id": "1",
+                "title": {
+                  "fr": "1",
+                  "en": "1"
+                }
+              },
+              {
+                "id": "2",
+                "title": {
+                  "fr": "2",
+                  "en": "2"
+                }
+              },
+              {
+                "id": "3",
+                "title": {
+                  "fr": "3",
+                  "en": "2"
+                }
+              },
+              {
+                "id": "4",
+                "title": {
+                  "fr": "4",
+                  "en": "4"
+                }
+              },
+              {
+                "id": "5",
+                "title": {
+                  "fr": "5",
+                  "en": "5"
+                }
+              },
+              {
+                "id": "6",
+                "title": {
+                  "fr": "Max",
+                  "en": "Hight"
+                }
+              },
+              {
+                "id": "7",
+                "title": {
+                  "fr": "Auto",
+                  "en": "Auto"
                 }
               }
             ]
@@ -538,14 +755,14 @@
         ]
       },
       {
-        "id": "setAutoMode",
+        "id": "setTargetPower",
         "title": {
-          "fr": "Gestion du mode auto",
-          "en": "Automatic mode management"
+          "en": "Set the Power",
+          "fr": "Définir la puissance de chauffe"
         },
         "titleFormatted": {
-          "en": "Set automatic mode management to [[selectedMode]]",
-          "fr": "Définir le mode automatique sur [[selectedMode]]"
+          "en": "Set the target power to [[target_power]]",
+          "fr": "Définir la puissance de chauffe sur [[target_power]]"
         },
         "args": [
           {
@@ -554,64 +771,45 @@
             "filter": "driver_id=cbox"
           },
           {
+            "name": "target_power",
             "type": "dropdown",
-            "name": "selectedMode",
             "values": [
               {
                 "id": "1",
                 "title": {
-                  "fr": "Mode Auto",
-                  "en": "Auto Mode"
+                  "fr": "1",
+                  "en": "1"
                 }
               },
               {
-                "id": "0",
+                "id": "2",
                 "title": {
-                  "fr": "Mode Manuel",
-                  "en": "Manual Mode"
+                  "fr": "2",
+                  "en": "1"
+                }
+              },
+              {
+                "id": "3",
+                "title": {
+                  "fr": "3",
+                  "en": "1"
+                }
+              },
+              {
+                "id": "4",
+                "title": {
+                  "fr": "4",
+                  "en": "1"
+                }
+              },
+              {
+                "id": "5",
+                "title": {
+                  "fr": "5",
+                  "en": "5"
                 }
               }
             ]
-          }
-        ]
-      },
-      {
-        "id": "setPelletsReload",
-        "title": {
-          "fr": "La réserve de granulé est rechargée",
-          "en": "The Pellets have been refilled"
-        },
-        "args": [
-          {
-            "type": "device",
-            "name": "device",
-            "filter": "driver_id=cbox"
-          }
-        ]
-      },
-      {
-        "id": "setAllowSilenceMode",
-        "title": {
-          "fr": "Définir l'autorisation du préréglage silence",
-          "en": "Set preset silence mode authorzation"
-        },
-        "titleFormatted": {
-          "fr": "Autoriser le préréglage silence [[enabled]]",
-          "en": "Allow silence mode preset [[enabled]]"
-        },
-        "args": [
-          {
-            "type": "device",
-            "name": "device",
-            "filter": "driver_id=cbox"
-          },
-          {
-            "type": "checkbox",
-            "name": "enabled",
-            "title": {
-              "fr": "Autoriser",
-              "en": "Allow"
-            }
           }
         ]
       }
@@ -631,11 +829,11 @@
         "target_power",
         "target_fan_speed",
         "alarm_pellets",
+        "alarm_connectivity",
         "stove_state",
         "stove_regulation",
         "external_temperature",
         "internal_temperature",
-        "stove_connection",
         "pellets_burned",
         "pellets_burned_since_load",
         "auto_mode",
@@ -659,6 +857,32 @@
           "template": "add_devices"
         }
       ],
+      "capabilitiesOptions": {
+        "target_temperature": {
+          "min": 15,
+          "max": 30,
+          "step": 1
+        },
+        "onoff": {
+          "title": {
+            "en": "Stove management",
+            "fr": "Gestion du poêle"
+          },
+          "uiQuickAction": true
+        },
+        "measure_power": {
+          "approximated": true,
+          "uiComponent": null
+        },
+        "meter_power": {
+          "uiComponent": null
+        }
+      },
+      "images": {
+        "large": "/drivers/cbox/images/large.jpg",
+        "small": "/drivers/cbox/images/small.jpg"
+      },
+      "id": "cbox",
       "settings": [
         {
           "type": "group",
@@ -686,6 +910,42 @@
               "label": {
                 "en": "Use of an deported thermometer",
                 "fr": "Utilisation thermomètre déporté"
+              }
+            },
+            {
+              "id": "externalTempTimeout",
+              "type": "number",
+              "value": 30,
+              "min": 1,
+              "max": 1440,
+              "step": 1,
+              "label": {
+                "en": "Remote temperature timeout (minutes)",
+                "fr": "Délai avant péremption de la température déportée (minutes)"
+              }
+            },
+            {
+              "id": "temperatureMin",
+              "type": "number",
+              "value": 0,
+              "min": -50,
+              "max": 80,
+              "step": 1,
+              "label": {
+                "en": "Minimum valid ambient temperature (°C)",
+                "fr": "Température ambiante minimale valide (°C)"
+              }
+            },
+            {
+              "id": "temperatureMax",
+              "type": "number",
+              "value": 40,
+              "min": -50,
+              "max": 80,
+              "step": 1,
+              "label": {
+                "en": "Maximum valid ambient temperature (°C)",
+                "fr": "Température ambiante maximale valide (°C)"
               }
             }
           ]
@@ -722,8 +982,8 @@
             {
               "id": "smartPause",
               "hint": {
-                "fr": "La pause intelligente met automatiquement le poêle en pause si la température indiquée est attente pendant le laps de temps spécifié.",
-                "en": "Smart Pause automatically pauses the stove if the specified temperature is held for the specified amount of time."
+                "fr": "La pause intelligente met automatiquement le poêle en pause lorsque la température atteint ou dépasse la température de consigne augmentée du delta de température pour pause.",
+                "en": "Smart Pause automatically pauses the stove when the temperature reaches or exceeds the target temperature plus the temperature delta for pause."
               },
               "type": "checkbox",
               "value": true,
@@ -1104,35 +1364,34 @@
             }
           ]
         }
-      ],
-      "capabilitiesOptions": {
-        "target_temperature": {
-          "min": 15,
-          "max": 30,
-          "step": 1
-        },
-        "onoff": {
-          "title": {
-            "en": "Stove management",
-            "fr": "Gestion du poêle"
-          },
-          "uiQuickAction": true
-        },
-        "measure_power": {
-          "approximated": true,
-          "uiComponent": null
-        },
-        "meter_power": {
-          "uiComponent": null
-        }
-      },
-      "images": {
-        "large": "/drivers/cbox/images/large.jpg",
-        "small": "/drivers/cbox/images/small.jpg"
-      },
-      "id": "cbox"
+      ]
     }
   ],
+  "widgets": {
+    "stove-dashboard": {
+      "name": {
+        "fr": "État du poêle",
+        "en": "Stove status"
+      },
+      "height": 115,
+      "devices": {
+        "type": "app",
+        "singular": true,
+        "filter": {
+          "class": "heater",
+          "capabilities": "target_temperature,measure_temperature,target_power,target_fan_speed,stove_state"
+        }
+      },
+      "api": {
+        "getStoveDashboardData": {
+          "method": "GET",
+          "path": "/state/:deviceId"
+        }
+      },
+      "id": "stove-dashboard",
+      "settings": []
+    }
+  },
   "capabilities": {
     "alarm_pellets": {
       "type": "boolean",
@@ -1207,34 +1466,6 @@
       },
       "uiComponent": null,
       "icon": "/assets/pellets_alarm.svg"
-    },
-    "stove_connection": {
-      "type": "boolean",
-      "getable": true,
-      "setable": false,
-      "title": {
-        "fr": "Alarme Connexion",
-        "en": "Alarm Connection"
-      },
-      "titleTrue": {
-        "fr": "Déconnecté",
-        "en": "Offline"
-      },
-      "titleFalse": {
-        "fr": "Connecté",
-        "en": "Online"
-      },
-      "insightsTitleTrue": {
-        "fr": "Déconnecté",
-        "en": "Offline"
-      },
-      "insightsTitleFalse": {
-        "fr": "Connecté",
-        "en": "Online"
-      },
-      "uiComponent": "sensor",
-      "insights": true,
-      "icon": "/assets/connected.svg"
     },
     "stove_ignation": {
       "type": "boolean",

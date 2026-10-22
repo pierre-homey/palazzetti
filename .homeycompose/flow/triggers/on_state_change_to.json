@@ -1,0 +1,38 @@
+{
+  "id": "on_state_change_to",
+  "title": {
+    "fr": "L'état du poêle a changé",
+    "en": "The stove state has changed"
+  },
+  "titleFormatted": {
+    "fr": "L'état du poêle a changé pour [[state]]",
+    "en": "The stove state has changed to [[state]]"
+  },
+  "tokens": [
+    {
+      "name": "state",
+      "type": "string",
+      "title": { "fr": "État", "en": "State" },
+      "example": "STOPPED"
+    }
+  ],
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=cbox"
+    },
+    {
+      "type": "dropdown",
+      "name": "state",
+      "values": [
+        { "id": "STOPPED", "title": { "fr": "Arrêté", "en": "Stopped" } },
+        { "id": "STARTING", "title": { "fr": "Allumage", "en": "Starting" } },
+        { "id": "STARTED", "title": { "fr": "Allumé", "en": "Started" } },
+        { "id": "STOPPING", "title": { "fr": "En arrêt", "en": "Stopping" } },
+        { "id": "FAULTED", "title": { "fr": "En défaut", "en": "Faulted" } },
+        { "id": "UNKNOW", "title": { "fr": "Inconnu", "en": "Unknown" } }
+      ]
+    }
+  ]
+}

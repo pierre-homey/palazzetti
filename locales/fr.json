@@ -1,5 +1,7 @@
 {
+  "waitForStop" : "Le poêle est en cours d’extinction. Attendez son arrêt complet avant de le rallumer.",
   "illegalStateOnOff" : "Etat non compatible avec l'arrêt ou le démarrage du poêle",
   "illegalRegulationMode" : "Mode non compatible avec l'état du poêle",
-  "manualActionImpossible" : "Action manuelle impossible"
+  "manualActionImpossible" : "Action manuelle impossible",
+  "communicationError" : "Erreur de communication avec le poêle"
 }
