@@ -4,18 +4,24 @@
     "en": "Stove status"
   },
   "height": 115,
-  "devices": {
-    "type": "app",
-    "singular": true,
-    "filter": {
-      "class": "heater",
-      "capabilities": "target_temperature,measure_temperature,target_power,target_fan_speed,stove_state"
-    }
-  },
   "api": {
     "getStoveDashboardData": {
       "method": "GET",
       "path": "/state/:deviceId"
     }
-  }
+  },
+  "settings": [
+    {
+      "id": "stove",
+      "type": "autocomplete",
+      "title": {
+        "fr": "Poêle",
+        "en": "Stove"
+      },
+      "hint": {
+        "fr": "Sélectionnez le poêle à afficher.",
+        "en": "Select the stove to display."
+      }
+    }
+  ]
 }

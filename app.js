@@ -1,46 +1,32 @@
 'use strict';
+const { localizedError } = require('./lib/i18n');
 const Homey = require('homey');
-const { HomeyAPI } = require('homey-api');
 class PalazzettiApp extends Homey.App {
   onInit() {
+    const widget = this.homey.dashboards.getWidget('stove-dashboard');
+    widget.registerSettingAutocompleteListener('stove', async query => {
+      const search = query.toLocaleLowerCase();
+      return this.homey.drivers.getDriver('cbox').getDevices()
+        .map(device => ({ id: device.getData().id, name: device.getName() }))
+        .filter(device => device.name.toLocaleLowerCase().includes(search));
+    });
     this.log('PalazzettiApp has been initialized');
     return Promise.resolve();
   }
 
-  async getDashboardApi() {
-    if (!this.dashboardApiPromise) {
-      this.dashboardApiPromise = HomeyAPI.createAppAPI({ homey: this.homey }).catch(error => {
-        this.dashboardApiPromise = null;
-        throw error;
-      });
-    }
-    return this.dashboardApiPromise;
-  }
-
   async getStoveDashboardData(deviceId) {
     if (typeof deviceId !== 'string' || !deviceId) {
-      throw new Error('Identifiant du poêle manquant dans la requête du widget');
+      throw localizedError(this.homey, 'Identifiant du poêle manquant dans la requête du widget');
     }
-    let homeyDevice;
-    try {
-      const api = await this.getDashboardApi();
-      homeyDevice = await api.devices.getDevice({ id: deviceId });
-    } catch (error) {
-      throw new Error(`Lecture de l’appareil Homey impossible : ${error.message || error}`);
-    }
-    if (!homeyDevice || typeof homeyDevice.data?.id !== 'string') {
-      throw new Error('Selected Homey device was not found');
-    }
-
     const driver = this.homey.drivers.getDriver('cbox');
-    const device = driver.getDevices().find(candidate => candidate.getData().id === homeyDevice.data.id);
-    if (!device) throw new Error('Selected Palazzetti device was not found');
+    const device = driver.getDevices().find(candidate => candidate.getData().id === deviceId);
+    if (!device) throw localizedError(this.homey, 'Selected Palazzetti device was not found');
     const settings = device.getSettings?.() || {};
     const pelletsConsumed = device.getCapabilityValue('pellets_burned_since_load');
 
     const dashboardData = {
       deviceId,
-      sourceId: homeyDevice.data.id,
+      sourceId: device.getData().id,
       name: device.getName(),
       targetTemperature: device.getCapabilityValue('target_temperature'),
       temperature: device.getCapabilityValue('measure_temperature'),

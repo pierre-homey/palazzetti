@@ -2,7 +2,6 @@
   "id": "com.palazzetti",
   "version": "1.5.0",
   "sdk": 3,
-  "permissions": ["homey:manager:api"],
   "compatibility": ">=12.3.0",
   "brandColor": "#75080a",
   "name": {

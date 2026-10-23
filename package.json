@@ -10,8 +10,5 @@
     "test": "node --test test/*.test.js",
     "lint": "eslint app.js drivers lib test widgets",
     "validate": "homey app validate"
-  },
-  "dependencies": {
-    "homey-api": "^3.21.0"
   }
 }

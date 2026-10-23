@@ -20,9 +20,7 @@ function load(file, homey, dependencies = {}) {
 }
 const Device = load('drivers/cbox/device.js', { Device: class {} });
 const Driver = load('drivers/cbox/driver.js', { Driver: class {} });
-const App = load('app.js', { App: class {} }, {
-  'homey-api': { HomeyAPI: { createAppAPI: ({ homey }) => homey.createAppAPI() } },
-});
+const App = load('app.js', { App: class {} });
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function deferred() {
   let resolve;
@@ -89,7 +87,7 @@ function device() {
 }
 function snapshot(overrides = {}) { return { STATUS: 0, SETP: 21, PWR: 3, F2L: 2, T1: 20, PQT: 100, ...overrides }; }
 
-test('dashboard lookup maps the selected Homey device ID to its paired CBox', async () => {
+test('dashboard lookup uses the selected paired CBox identifier', async () => {
   const app = new App();
   const device = {
     getData: () => ({ id: 'paired-cbox-id' }),
@@ -103,21 +101,14 @@ test('dashboard lookup maps the selected Homey device ID to its paired CBox', as
     })[id],
   };
   app.homey = {
-    api: { get: () => { throw new Error('Missing Session'); } },
-    createAppAPI: async () => ({ devices: {
-      getDevice: async ({ id }) => {
-        assert.equal(id, 'homey-device-id');
-        return { data: { id: 'paired-cbox-id' } };
-      },
-    } }),
     drivers: { getDriver: id => {
       assert.equal(id, 'cbox');
       return { getDevices: () => [device] };
     } },
   };
 
-  const data = await app.getStoveDashboardData('homey-device-id');
-  assert.equal(data.deviceId, 'homey-device-id');
+  const data = await app.getStoveDashboardData('paired-cbox-id');
+  assert.equal(data.deviceId, 'paired-cbox-id');
   assert.equal(data.sourceId, 'paired-cbox-id');
   assert.equal(data.name, 'CBox');
   assert.equal(data.targetTemperature, 21);
@@ -127,32 +118,34 @@ test('dashboard lookup maps the selected Homey device ID to its paired CBox', as
   assert.equal(data.state, 'STARTED');
 });
 
-test('dashboard shares its authenticated API session between concurrent requests', async () => {
+test('widget autocomplete lists current CBox devices and filters by name', async () => {
   const app = new App();
-  const session = deferred();
-  let calls = 0;
-  app.homey = { createAppAPI: () => { calls += 1; return session.promise; } };
-  const first = app.getDashboardApi();
-  const second = app.getDashboardApi();
-  const api = { devices: {} };
-  session.resolve(api);
-  assert.equal(await first, api);
-  assert.equal(await second, api);
-  assert.equal(calls, 1);
-});
-
-test('dashboard retries session creation after an authentication failure', async () => {
-  const app = new App();
-  const api = { devices: {} };
-  let calls = 0;
-  app.homey = { createAppAPI: async () => {
-    calls += 1;
-    if (calls === 1) throw new Error('Authentication failed');
-    return api;
-  } };
-  await assert.rejects(app.getDashboardApi(), /Authentication failed/);
-  assert.equal(await app.getDashboardApi(), api);
-  assert.equal(calls, 2);
+  let autocomplete;
+  let devices = [
+    { getData: () => ({ id: 'a' }), getName: () => 'Salon' },
+    { getData: () => ({ id: 'b' }), getName: () => 'Étage' },
+  ];
+  app.log = () => {};
+  app.homey = {
+    dashboards: { getWidget: id => {
+      assert.equal(id, 'stove-dashboard');
+      return { registerSettingAutocompleteListener: (setting, listener) => {
+        assert.equal(setting, 'stove');
+        autocomplete = listener;
+      } };
+    } },
+    drivers: { getDriver: () => ({ getDevices: () => devices }) },
+    __: key => key,
+  };
+  await app.onInit();
+  assert.equal((await autocomplete('')).length, 2);
+  const matches = await autocomplete('SAL');
+  assert.equal(matches.length, 1);
+  assert.equal(matches[0].id, 'a');
+  devices = [];
+  assert.equal((await autocomplete('')).length, 0);
+  await assert.rejects(app.getStoveDashboardData('a'), /not found/);
+  await assert.rejects(app.getStoveDashboardData(undefined), /Select a stove/);
 });
 
 test('migration waits for capability creation and first sample before scheduling', () => {
@@ -241,7 +234,7 @@ test('failed initial connection keeps polling and next update recovers', () => {
 test('missing address rejects without marking device unavailable', () => {
   const d = device();
   d.stoveIp = null;
-  return assert.rejects(d.onTimeOut(), /ERROR_NO_IP/).then(() => assert.equal(d.available, true));
+  return assert.rejects(d.onTimeOut(), /IP address/).then(() => assert.equal(d.available, true));
 });
 
 test('operations serialize and rejection does not poison the queue', () => {
@@ -418,7 +411,7 @@ test('late successful poll response after deletion cannot write to Homey', async
   await tick();
   d.onDeleted();
   gate.resolve(snapshot());
-  await assert.rejects(poll, /device stopped/);
+  await assert.rejects(poll, /device has stopped/);
   assert.equal(writes, 0);
   assert.deepEqual(d.events, []);
   assert.equal(d.timeoutId, null);
@@ -437,7 +430,7 @@ for (const fails of [false, true]) {
     d.onDeleted();
     if (fails) gate.reject(new Error('Not Found: Device with ID deleted-device'));
     else gate.resolve();
-    await assert.rejects(poll, /device stopped/);
+    await assert.rejects(poll, /device has stopped/);
     assert.equal(writes, 1);
     assert.deepEqual(d.events, []);
     assert.equal(d.timeoutId, null);
@@ -459,7 +452,7 @@ test('queued commands do not run after device deletion', () => {
   const d = device();
   const result = d.runOperation(() => { throw new Error('must not execute'); });
   d.onDeleted();
-  return assert.rejects(result, /device stopped/);
+  return assert.rejects(result, /device has stopped/);
 });
 
 test('frost protection does not ignite when temperature is above threshold', () => {
@@ -821,7 +814,7 @@ test('Flow action failures reach Homey and conditions return booleans', () => {
   } };
   driver.onInit();
   const d = device();
-  return assert.rejects(actions.setTargetPower({ device: d, target_power: '4' }), /AUTO_MODE_ENABLED/)
+  return assert.rejects(actions.setTargetPower({ device: d, target_power: '4' }), /Disable automatic mode/)
     .then(() => conditions.isAutoModeEnabled({ device: d }))
     .then(value => assert.equal(value, true));
 });
@@ -943,6 +936,28 @@ test('preset Flow receives the new power and fan values together', async () => {
   assert.equal(events.length, 1);
   assert.equal(events[0].power, 4);
   assert.equal(events[0].fan_speed, 5);
+});
+
+test('external temperature regulation publishes a power and fan change only once', async () => {
+  const d = device();
+  const events = [];
+  d.applySettings({ ...d.settings, externalTerm: true });
+  d.stoveState = 'STARTED';
+  d.values.target_power = '4';
+  d.values.target_fan_speed = '5';
+  d.powerFanChangeFlow = { trigger: async (dev, tokens) => events.push(tokens) };
+  d.onTempChange = () => d.applyPreset(1, 3);
+
+  await d.setExternalTemp(19.5);
+
+  assert.equal(events.length, 1);
+  assert.equal(events[0].temperature, 19.5);
+  assert.equal(events[0].power, 1);
+  assert.equal(events[0].fan_speed, 3);
+  await d.setExternalTemp(19.5);
+  assert.equal(events.length, 1);
+  await d.setExternalTemp(20);
+  assert.equal(events.length, 1);
 });
 
 test('smart pause sends OFF and retains paused mode during cooling', () => {

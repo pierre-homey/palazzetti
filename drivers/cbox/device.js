@@ -1,5 +1,6 @@
 'use strict';
 const Homey = require('homey');
+const { localizedError, translate, isKnownError } = require('../../lib/i18n');
 const request = require('../../lib/cbox-http');
 const manifest = require('../../app.json').drivers.find(driver => driver.id === 'cbox');
 
@@ -25,8 +26,14 @@ function number(value, name, min = -Infinity, max = Infinity, integer = false) {
 }
 
 class CBoxDevice extends Homey.Device {
+  number(...args) {
+    try { return number(...args); } catch (error) {
+      throw localizedError(this.homey, error.message);
+    }
+  }
+
   ensureActive() {
-    if (this.disposed) throw new Error('CBox device stopped');
+    if (this.disposed) throw localizedError(this.homey, 'CBox device stopped');
   }
 
   // Check both sides of each async Homey call: deletion can happen while it runs.
@@ -52,7 +59,7 @@ class CBoxDevice extends Homey.Device {
   // never enqueue recursively, so a multi-command operation cannot deadlock.
   runOperation(operation) {
     const result = (this.operationTail || Promise.resolve()).then(() => {
-      if (this.disposed) throw new Error('CBox device stopped');
+      if (this.disposed) throw localizedError(this.homey, 'CBox device stopped');
       return operation();
     });
     this.operationTail = result.catch(() => {});
@@ -126,18 +133,18 @@ class CBoxDevice extends Homey.Device {
   onSettings({ newSettings }) {
     return this.runOperation(() => {
       if (!(newSettings.deltaN1 < newSettings.deltaN2 && newSettings.deltaN2 <= newSettings.deltaSilence)) {
-        throw new Error('Temp. N1 < Temp. N2 <= Temp. Silence required');
+        throw localizedError(this.homey, 'Temp. N1 < Temp. N2 <= Temp. Silence required');
       }
-      if (!(newSettings.hgMinTemp < newSettings.hgMaxTemp)) throw new Error('Invalid frost protection temperatures');
+      if (!(newSettings.hgMinTemp < newSettings.hgMaxTemp)) throw localizedError(this.homey, 'Invalid frost protection temperatures');
       const externalTempTimeout = Number(newSettings.externalTempTimeout ?? 30);
       if (!Number.isInteger(externalTempTimeout) || externalTempTimeout < 1 || externalTempTimeout > 1440) {
-        throw new Error('External temperature timeout must be between 1 and 1440 minutes');
+        throw localizedError(this.homey, 'External temperature timeout must be between 1 and 1440 minutes');
       }
       const temperatureMin = Number(newSettings.temperatureMin ?? 0);
       const temperatureMax = Number(newSettings.temperatureMax ?? 40);
       if (!Number.isFinite(temperatureMin) || !Number.isFinite(temperatureMax)
         || temperatureMin < -50 || temperatureMax > 80 || temperatureMin >= temperatureMax) {
-        throw new Error('Invalid ambient temperature limits');
+        throw localizedError(this.homey, 'Invalid ambient temperature limits');
       }
       const check = newSettings.ip !== this.stoveIp
         ? this.sendHTTPRequest(this.getcallCboxURL('LABL', false, null, newSettings.ip))
@@ -247,7 +254,7 @@ class CBoxDevice extends Homey.Device {
   }
 
   validateSnapshot(data) {
-    if (!data || typeof data !== 'object') throw new Error('Invalid CBox state');
+    if (!data || typeof data !== 'object') throw localizedError(this.homey, 'Invalid CBox state');
     let T1;
     let temperatureValid = true;
     try {
@@ -257,15 +264,15 @@ class CBoxDevice extends Homey.Device {
       temperatureValid = false;
     }
     return {
-      STATUS: number(data.STATUS, 'STATUS', 0, 65535, true),
-      SETP: number(data.SETP, 'SETP'), PWR: number(data.PWR, 'PWR', 1, 5, true),
-      F2L: number(data.F2L, 'F2L', 0, 7, true), T1, temperatureValid,
-      PQT: number(data.PQT, 'PQT', 0),
+      STATUS: this.number(data.STATUS, 'STATUS', 0, 65535, true),
+      SETP: this.number(data.SETP, 'SETP'), PWR: this.number(data.PWR, 'PWR', 1, 5, true),
+      F2L: this.number(data.F2L, 'F2L', 0, 7, true), T1, temperatureValid,
+      PQT: this.number(data.PQT, 'PQT', 0),
     };
   }
 
   validateTemperature(value, name) {
-    return number(value, name, this.temperatureMin, this.temperatureMax);
+    return this.number(value, name, this.temperatureMin, this.temperatureMax);
   }
 
   updateAllStates(data) {
@@ -389,7 +396,7 @@ class CBoxDevice extends Homey.Device {
   setPelletsReloadDone(publish = true) {
     const previous = this.getDashboardValues();
     const kilos = this.getCapabilityValue('pellets_burned');
-    if (!finite(kilos)) return Promise.reject(new Error('Pellet counter unavailable'));
+    if (!finite(kilos)) return Promise.reject(localizedError(this.homey, 'Pellet counter unavailable'));
     return this.callHomey('setStoreValue', 'reloadDoneIndex', kilos)
       .then(() => this.callHomey('setCapabilityValue', 'pellets_burned_since_load', 0))
       .then(() => this.callHomey('setStoreValue', 'prePelletsAttentionSended', false))
@@ -488,9 +495,11 @@ class CBoxDevice extends Homey.Device {
         this.lastExternalTemperatureUpdate = Date.now();
         this.externalTemperatureStaleNotified = false;
         this.externalTemperatureStale = false;
-        return this.useExtCaptor ? this.setCurrentTemp(temp) : undefined;
+        // Publish external sensor changes before regulation can change power
+        // and fan speed, otherwise the outer snapshot reports them twice.
+        return this.publishDashboardUpdate(previous);
       })
-      .then(() => this.publishDashboardUpdate(previous));
+      .then(() => this.useExtCaptor ? this.setCurrentTemp(temp) : undefined);
   }
   setInternalTemp(value) {
     const temp = this.validateTemperature(value, 'internal temperature');
@@ -499,7 +508,7 @@ class CBoxDevice extends Homey.Device {
   }
 
   setPreset(value) {
-    const preset = number(value, 'preset', 0, 3, true);
+    const preset = this.number(value, 'preset', 0, 3, true);
     const power = this.settings[preset === 3 ? 'presetSilenceBurningPower' : `preset${preset}BurningPower`];
     const fan = preset === 3 || this.regulationMode === MODE.SILENT ? 0 : this.settings[`preset${preset}FanSpeed`];
     return this.applyPreset(power, fan);
@@ -518,8 +527,8 @@ class CBoxDevice extends Homey.Device {
     return this.setPreset(preset);
   }
   applyPreset(power, fanSpeed) {
-    const p = number(power, 'power', 1, 5, true);
-    const f = number(fanSpeed, 'fan speed', 0, 7, true);
+    const p = this.number(power, 'power', 1, 5, true);
+    const f = this.number(fanSpeed, 'fan speed', 0, 7, true);
     const previous = this.getDashboardValues();
     return this.sendHTTPRequest(this.getcallCboxURL('RFAN', true, f))
       .then(() => this.setFanSpeed(f, false))
@@ -583,14 +592,14 @@ class CBoxDevice extends Homey.Device {
   }
 
   setIgnationAllowed(value) {
-    if (typeof value !== 'boolean') throw new Error('Invalid ignition permission');
+    if (typeof value !== 'boolean') throw localizedError(this.homey, 'Invalid ignition permission');
     const previous = this.getDashboardValues();
     return this.callHomey('setCapabilityValue', 'stove_ignation', value)
       .then(() => this.publishDashboardUpdate(previous))
       .then(() => value ? this.onTempChange() : undefined);
   }
   enableAutoMode(value) {
-    if (typeof value !== 'boolean') throw new Error('Invalid automatic mode');
+    if (typeof value !== 'boolean') throw localizedError(this.homey, 'Invalid automatic mode');
     const previous = this.getDashboardValues();
     return this.callHomey('setCapabilityValue', 'auto_mode', value)
       .then(() => this.publishDashboardUpdate(previous))
@@ -599,7 +608,7 @@ class CBoxDevice extends Homey.Device {
   setSilenceMode(value) { return this.changeSetting('deltaSilenceEnable', value); }
   setSmartPause(value) { return this.changeSetting('smartPause', value); }
   changeSetting(key, value) {
-    if (typeof value !== 'boolean') throw new Error(`Invalid ${key}`);
+    if (typeof value !== 'boolean') throw localizedError(this.homey, `Invalid ${key}`);
     return this.callHomey('setSettings', { [key]: value })
       .then(() => { this.applySettings({ ...this.settings, [key]: value }); })
       .then(() => this.onTempChange());
@@ -608,23 +617,23 @@ class CBoxDevice extends Homey.Device {
   onCapabilityAuto(value) { return this.enableAutoMode(value); }
 
   onCapabilityTargetTemperature(value) {
-    const temp = Math.round(number(value, 'target temperature', 15, 30));
+    const temp = Math.round(this.number(value, 'target temperature', 15, 30));
     return this.sendHTTPRequest(this.getcallCboxURL('SETP', true, temp))
       .then(() => this.setTargetTemperature(temp));
   }
   onCapabilityTargetPower(value) {
-    if (this.isAutoModeEnable()) throw new Error('AUTO_MODE_ENABLED');
-    const power = number(value, 'power', 1, 5, true);
+    if (this.isAutoModeEnable()) throw localizedError(this.homey, 'AUTO_MODE_ENABLED');
+    const power = this.number(value, 'power', 1, 5, true);
     return this.sendHTTPRequest(this.getcallCboxURL('POWR', true, power)).then(() => this.setPower(power));
   }
   onCapabilityTargetFanSpeed(value) {
-    if (this.isAutoModeEnable()) throw new Error('AUTO_MODE_ENABLED');
-    const speed = number(value, 'fan speed', 0, 7, true);
+    if (this.isAutoModeEnable()) throw localizedError(this.homey, 'AUTO_MODE_ENABLED');
+    const speed = this.number(value, 'fan speed', 0, 7, true);
     return this.sendHTTPRequest(this.getcallCboxURL('RFAN', true, speed)).then(() => this.setFanSpeed(speed));
   }
 
   onCapabilityOnOff(value) {
-    if (typeof value !== 'boolean') throw new Error('Invalid on/off value');
+    if (typeof value !== 'boolean') throw localizedError(this.homey, 'Invalid on/off value');
     if (!value) {
       const stop = [STATE.STOPPED, STATE.STOPPING].includes(this.stoveState)
         ? Promise.resolve() : this.setOnOffPoele(false);
@@ -633,7 +642,7 @@ class CBoxDevice extends Homey.Device {
         return this.setRegulation(MODE.STOPPED);
       }).then(() => this.setStateOnOff());
     }
-    if (!this.isIgnationAllowed()) throw new Error('Ignition is disabled');
+    if (!this.isIgnationAllowed()) throw localizedError(this.homey, 'Ignition is disabled');
     if (this.stoveState === STATE.STOPPING || this.pendingOff) {
       throw new Error(this.homey.__('waitForStop'));
     }
@@ -677,9 +686,9 @@ class CBoxDevice extends Homey.Device {
   }
 
   getcallCboxURL(command, isSet, value, address = this.stoveIp) {
-    if (typeof address !== 'string' || !address.trim()) throw new Error('ERROR_NO_IP');
+    if (typeof address !== 'string' || !address.trim()) throw localizedError(this.homey, 'ERROR_NO_IP');
     const base = new URL(`http://${address.trim()}`);
-    if (base.username || base.password || base.pathname !== '/' || base.search || base.hash) throw new Error('Invalid CBox address');
+    if (base.username || base.password || base.pathname !== '/' || base.search || base.hash) throw localizedError(this.homey, 'Invalid CBox address');
     const parts = isSet ? ['SET', command, value] : ['GET', command];
     return `${base.origin}/cgi-bin/sendmsg.lua?cmd=${parts.map(part => encodeURIComponent(part)).join('+')}`;
   }
@@ -687,8 +696,8 @@ class CBoxDevice extends Homey.Device {
     return this.getcallCboxURL('LABL', false).replace('GET+LABL', `CMD+${on ? 'ON' : 'OFF'}`);
   }
   setOnOffPoele(on) {
-    if (on && !this.isIgnationAllowed()) return Promise.reject(new Error('Ignition is disabled'));
-    if (on && this.stoveState !== STATE.STOPPED) return Promise.reject(new Error('Stove is not stopped'));
+    if (on && !this.isIgnationAllowed()) return Promise.reject(localizedError(this.homey, 'Ignition is disabled'));
+    if (on && this.stoveState !== STATE.STOPPED) return Promise.reject(localizedError(this.homey, 'Stove is not stopped'));
     return this.sendHTTPRequest(this.getOnOffRequestURL(on)).then(() => {
       // Until the next sample, prevent another decision from repeating ON/OFF.
       this.stoveState = on ? STATE.STARTING : STATE.STOPPING;
@@ -697,7 +706,7 @@ class CBoxDevice extends Homey.Device {
     });
   }
   sendHTTPRequest(url) {
-    if (this.disposed) return Promise.reject(new Error('CBox device stopped'));
+    if (this.disposed) return Promise.reject(localizedError(this.homey, 'CBox device stopped'));
     let cancelRequest;
     const isPollingRequest = !!this._pollingRequest;
     return request(url, {
@@ -719,9 +728,13 @@ class CBoxDevice extends Homey.Device {
       if (this.disposed) throw error;
       if (!isPollingRequest) {
         this.communicationFailureCount = 0;
-        return Promise.reject(error);
       }
-      return Promise.reject(error);
+      const localized = localizedError(this.homey, error.message);
+      if (!isKnownError(error.message)) {
+        localized.message = translate(this.homey, 'errors.communication');
+      }
+      localized.cause = error;
+      return Promise.reject(localized);
     }).finally(() => {
       if (cancelRequest && this.activeRequests) this.activeRequests.delete(cancelRequest);
     });

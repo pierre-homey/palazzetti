@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
@@ -67,32 +67,37 @@
   </head>
   <body class="homey-widget">
     <main id="root" class="message homey-text-regular homey-text-align-center" role="status">
-      Chargement du poêle…
+      …
     </main>
     <script>
       const root = document.getElementById('root');
       let selectedSourceId;
+      let widgetHomey;
+      const t = key => widgetHomey.__(`widget.${key}`);
+      const escapeText = value => String(value).replace(/[&<>"']/g, character =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+      const label = key => escapeText(t(key));
 
       function formatValue(value, suffix = '') {
         if (value === null || value === undefined || value === '') return '—';
         const number = Number(value);
-        return Number.isFinite(number) ? `${number}${suffix}` : '—';
+        return Number.isFinite(number) ? `${number.toLocaleString(t('language'))}${suffix}` : '—';
       }
 
       function statusLabel(state, regulation) {
-        if (state !== 'FAULTED' && regulation === 'PAUSED') return 'En pause';
+        if (state !== 'FAULTED' && regulation === 'PAUSED') return t('paused');
         const labels = {
-          STARTING: 'Allumage',
-          STARTED: 'En chauffe',
-          STOPPING: 'Arrêt en cours',
-          STOPPED: 'Arrêté',
-          FAULTED: 'En défaut',
-          UNKNOW: 'État inconnu',
+          STARTING: t('starting'),
+          STARTED: t('started'),
+          STOPPING: t('stopping'),
+          STOPPED: t('stopped'),
+          FAULTED: t('faulted'),
+          UNKNOW: t('unknown'),
         };
         if (state === 'STOPPED' && regulation && regulation !== 'STOPPED') {
-          return { WAITING_TEMP: 'En attente', HORS_GEL: 'Hors gel', BURNING: 'En attente', SILENTLY: 'En attente' }[regulation] || 'En attente';
+          return { WAITING_TEMP: t('waiting'), HORS_GEL: t('frost'), BURNING: t('waiting'), SILENTLY: t('waiting') }[regulation] || t('waiting');
         }
-        return labels[state] || 'État inconnu';
+        return labels[state] || t('unknown');
       }
 
       function statusIcon(state, regulation) {
@@ -118,47 +123,50 @@
         const active = data.regulation !== 'PAUSED' && ['STARTING', 'STARTED'].includes(data.state);
         root.className = 'dashboard';
         root.innerHTML = `
-          <section class="temperatures" aria-label="Températures">
-            <div aria-label="Température mesurée">
+          <section class="temperatures" aria-label="${label('temperatures')}">
+            <div aria-label="${label('measured')}">
               <strong class="temperature-value${data.temperatureStale === true ? ' stale' : ''}">${formatValue(data.temperature)}<sup>°C</sup></strong>
             </div>
-            <div class="target" aria-label="Température cible${data.externalTemperature === true ? ', mesure par sonde externe' : ''}">
+            <div class="target" aria-label="${label('target')}${data.externalTemperature === true ? label('external') : ''}">
               ${data.externalTemperature === true ? '<svg class="temperature-source-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 16a5.5 5.5 0 0 1 0-8"/><path d="M5.5 19a9.5 9.5 0 0 1 0-14"/><circle cx="12" cy="12" r="2"/></svg>' : ''}
               ${formatValue(data.targetTemperature)}<sup>°C</sup>
             </div>
           </section>
-          <span class="status${active ? ' active' : ''}${data.state === 'FAULTED' ? ' fault' : ''}">${statusLabel(data.state, data.regulation)}<span class="status-icon" style="--status-image: url('icons/${statusIcon(data.state, data.regulation)}.svg')" aria-hidden="true"></span></span>
-          <section class="footer${active ? '' : ' heating-inactive'}" aria-label="État et réglages du poêle">
+          <span class="status${active ? ' active' : ''}${data.state === 'FAULTED' ? ' fault' : ''}">${escapeText(statusLabel(data.state, data.regulation))}<span class="status-icon" style="--status-image: url('icons/${statusIcon(data.state, data.regulation)}.svg')" aria-hidden="true"></span></span>
+          <section class="footer${active ? '' : ' heating-inactive'}" aria-label="${label('settings')}">
             <span class="metric metric-power">
-              <span class="label homey-text-regular" role="img" aria-label="Puissance"><span class="metric-icon icon-fire" aria-hidden="true"></span></span>
+              <span class="label homey-text-regular" role="img" aria-label="${label('power')}"><span class="metric-icon icon-fire" aria-hidden="true"></span></span>
               <strong class="metric-value homey-text-regular">${formatValue(data.power)}</strong>
             </span>
             <span class="metric metric-fan">
-              <span class="label homey-text-regular" role="img" aria-label="Ventilation"><span class="metric-icon icon-fan" aria-hidden="true"></span></span>
+              <span class="label homey-text-regular" role="img" aria-label="${label('fan')}"><span class="metric-icon icon-fan" aria-hidden="true"></span></span>
               <strong class="metric-value homey-text-regular">${formatValue(data.fanSpeed)}</strong>
             </span>
             <span class="pellets${data.pelletsAlarm === true ? ' alarm' : data.pelletsLow === true ? ' low' : ''}" role="${data.pelletsAlarm === true ? 'alert' : 'status'}">
               <span class="app-icon" style="--app-image: url('icons/pellets_alarm.svg')" aria-hidden="true"></span>
-              <span class="pellets-label">${data.pelletsAlarm === true ? 'Tout est<br>consommé' : `${formatValue(data.pelletsConsumed)} kg<br>consommés`}</span>
+              <span class="pellets-label">${data.pelletsAlarm === true ? `${label('emptyFirst')}<br>${label('emptySecond')}` : `${formatValue(data.pelletsConsumed)} kg<br>${label('consumed')}`}</span>
             </span>
-            <span class="system-state${data.autoMode === true ? ' enabled' : ''}" aria-label="Mode automatique ${data.autoMode === true ? 'activé' : 'désactivé'}">
+            <span class="system-state${data.autoMode === true ? ' enabled' : ''}" aria-label="${label(data.autoMode === true ? 'autoOn' : 'autoOff')}">
               <span class="app-icon" style="--app-image: url('icons/auto_mode.svg')" aria-hidden="true"></span>Auto
             </span>
-            <span class="system-state${data.ignitionAllowed === true ? ' enabled' : ''}" aria-label="Allumage ${data.ignitionAllowed === true ? 'autorisé' : 'interdit'}">
-              <span class="app-icon" style="--app-image: url('icons/block_start.svg')" aria-hidden="true"></span><span class="system-state-label">Allumage<br>${data.ignitionAllowed === true ? 'autorisé' : 'interdit'}</span>
+            <span class="system-state${data.ignitionAllowed === true ? ' enabled' : ''}" aria-label="${label(data.ignitionAllowed === true ? 'ignitionOn' : 'ignitionOff')}">
+              <span class="app-icon" style="--app-image: url('icons/block_start.svg')" aria-hidden="true"></span><span class="system-state-label">${label('ignition')}<br>${label(data.ignitionAllowed === true ? 'allowed' : 'blocked')}</span>
             </span>
           </section>
           `;
       }
 
       function onHomeyReady(Homey) {
+        widgetHomey = Homey;
+        document.documentElement.lang = t('language');
+        showMessage(t('loading'));
         Homey.ready({ height: 115 });
 
         function loadSelectedDevice() {
-          const selectedDeviceId = Homey.getDeviceIds()[0];
+          const selectedDeviceId = Homey.getSettings().stove?.id;
           if (!selectedDeviceId) {
             selectedSourceId = undefined;
-            showMessage('Sélectionnez un poêle dans les réglages du widget.');
+            showMessage(t('select'));
             return;
           }
           selectedSourceId = undefined;
@@ -169,8 +177,7 @@
             })
             .catch(error => {
               console.error('Unable to load stove dashboard data', error);
-              const detail = typeof error === 'string' ? error : error?.message || 'Erreur sans détail';
-              showMessage(`Impossible de charger les données du poêle : ${detail} (diagnostic 2)`, true);
+              showMessage(t('loadError'), true);
             });
         }
 

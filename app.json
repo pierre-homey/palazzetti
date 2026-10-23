@@ -3,9 +3,6 @@
   "id": "com.palazzetti",
   "version": "1.5.0",
   "sdk": 3,
-  "permissions": [
-    "homey:manager:api"
-  ],
   "compatibility": ">=12.3.0",
   "brandColor": "#75080a",
   "name": {
@@ -1133,7 +1130,7 @@
                   },
                   "type": "number",
                   "value": 1,
-                  "min": -1,
+                  "min": -5,
                   "label": {
                     "en": "Temp. Delta",
                     "fr": "Delta de Température"
@@ -1190,7 +1187,7 @@
                   },
                   "type": "number",
                   "value": 2,
-                  "min": -0.5,
+                  "min": -3,
                   "label": {
                     "en": "Temp. Delta",
                     "fr": "Delta de Température"
@@ -1374,22 +1371,27 @@
         "en": "Stove status"
       },
       "height": 115,
-      "devices": {
-        "type": "app",
-        "singular": true,
-        "filter": {
-          "class": "heater",
-          "capabilities": "target_temperature,measure_temperature,target_power,target_fan_speed,stove_state"
-        }
-      },
       "api": {
         "getStoveDashboardData": {
           "method": "GET",
           "path": "/state/:deviceId"
         }
       },
-      "id": "stove-dashboard",
-      "settings": []
+      "settings": [
+        {
+          "id": "stove",
+          "type": "autocomplete",
+          "title": {
+            "fr": "Poêle",
+            "en": "Stove"
+          },
+          "hint": {
+            "fr": "Sélectionnez le poêle à afficher.",
+            "en": "Select the stove to display."
+          }
+        }
+      ],
+      "id": "stove-dashboard"
     }
   },
   "capabilities": {
